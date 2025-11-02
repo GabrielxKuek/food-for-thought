@@ -18,7 +18,9 @@ based on what the user inputs (biometric information, goal to reach)
 }
 ```
 
-<h1>this is for keeping up with the users goals</h1> // this gets adjusted based on the users information
+<h1>this is for keeping up with the users goals</h1> 
+
+// this gets adjusted based on the users information
 ```bash
 computer vision (differentiating food types)
 {

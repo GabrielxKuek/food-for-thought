@@ -1,0 +1,55 @@
+{
+  "foodLogs": [
+    {
+      "userId": "user_001",
+      "timestamp": "2025-11-25T12:30:00Z",
+      "source": "manual",
+      "name": "Chicken Rice",
+      "portion_g": 300,
+      "nutritional_information": {
+        "energy_kcal": 620,
+        "fat_g": {
+          "total": 22.74,
+          "saturated": 6.108,
+          "polyunsaturated": 5.52,
+          "monounsaturated": 9.257
+        },
+        "cholesterol_mg": 79,
+        "sodium_mg": 1011,
+        "carbohydrates_g": {
+          "total": 71.52,
+          "fibre": 1.3,
+          "sugar": 2.32
+        },
+        "protein_g": 29.81,
+        "potassium_mg": 399
+      }
+    },
+    {
+      "userId": "user_001",
+      "timestamp": "2025-11-25T19:00:00Z",
+      "source": "cv",
+      "name": "Mee Pok",
+      "portion_g": 350,
+      "confidence": 0.93,
+      "nutritional_information": {
+        "energy_kcal": 480,
+        "fat_g": {
+          "total": 18,
+          "saturated": 5,
+          "polyunsaturated": 4,
+          "monounsaturated": 9
+        },
+        "cholesterol_mg": 65,
+        "sodium_mg": 950,
+        "carbohydrates_g": {
+          "total": 60,
+          "fibre": 2,
+          "sugar": 3
+        },
+        "protein_g": 20,
+        "potassium_mg": 350
+      }
+    }
+  ]
+}

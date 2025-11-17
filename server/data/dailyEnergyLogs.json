@@ -1,0 +1,18 @@
+{
+  "dailyEnergySummaries": [
+    {
+      "userId": "user_001",
+      "date": "2025-11-24",
+      "calories_consumed": 1850,
+      "calories_burned": 2100,
+      "tdee_estimate": 2300
+    },
+    {
+      "userId": "user_001",
+      "date": "2025-11-25",
+      "calories_consumed": 2000,
+      "calories_burned": 1900,
+      "tdee_estimate": 2250
+    }
+  ]
+}

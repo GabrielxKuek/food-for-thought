@@ -1,0 +1,6 @@
+{
+  "weightLogs": [
+    { "userId": "user_001", "date": "2025-11-18", "weight_kg": 60 },
+    { "userId": "user_001", "date": "2025-11-25", "weight_kg": 62 }
+  ]
+}

@@ -1,0 +1,91 @@
+User Data JSON (general information)
+"users": [
+    {
+        userId: string,
+        profile: {
+            age: integer,
+            sex: string ("male" | "female"),
+            height_cm: integer,
+            initial_weight_kg: float
+        },
+        goal: {
+            type: string ("weight_loss" | "weight_gain" | "maintenance"),
+            weekly_target_kg: float,
+            macro_goals: {
+                carbs_g: float,
+                protein_g: float,
+                fat_g: float
+            }
+        }
+    }
+]
+
+Weight Logs JSON
+"weightLogs": [
+    {
+        userId: string,
+        date: string (YYYY-MM-DD),
+        weight_kg: float
+    }
+]
+
+Heart Rate Logs JSON
+"heartRateLogs": [
+    {
+        userId: string,
+        timestamp: string (ISO 8601),
+        bpm: integer
+    }
+]
+
+Activity Sessions JSON
+"activitySessions": [
+    {
+        userId: string,
+        start: string (ISO 8601),
+        end: string (ISO 8601),
+        activity_level: string ("rest" | "light" | "moderate" | "vigorous"),
+        estimated_calories_burned: float
+    }
+]
+
+Food Logs JSON
+"foodLogs": [
+    {
+        userId: string,
+        timestamp: string (ISO 8601),
+        source: string ("manual" | "cv"),
+        name: string,
+        portion_g: float,
+        confidence?: float,            # only for CV-detected foods
+        nutritional_information: {
+            energy_kcal: float,
+            fat_g: {
+                total: float,
+                saturated: float,
+                polyunsaturated: float,
+                monounsaturated: float
+            },
+            cholesterol_mg: float,
+            sodium_mg: float,
+            carbohydrates_g: {
+                total: float,
+                fibre: float,
+                sugar: float
+            },
+            protein_g: float,
+            potassium_mg: float
+        }
+    }
+]
+
+Daily Energy Summaries JSON
+"dailyEnergySummaries": [
+    {
+        userId: string,
+        date: string (YYYY-MM-DD),
+        calories_consumed: float,
+        calories_burned: float,
+        tdee_estimate: float
+    }
+]

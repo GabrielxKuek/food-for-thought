@@ -6,6 +6,7 @@ import FoodLogger from './components/FoodLogger';
 import ActivityTracker from './components/ActivityTracker';
 import Tamagotchi from './components/Tamagotchi';
 import { UserProfile } from './types';
+import { HealthProvider } from './context/HealthContext';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'profile' | 'food' | 'activity'>('dashboard');
@@ -52,49 +53,51 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <div className="container">
-        <div className="page">
-          <div className="header">
-            <h1>🍎 Food for Thought</h1>
-            <p>Your AI-Powered Fitness Companion</p>
+    <HealthProvider>
+      <div className="App">
+        <div className="container">
+          <div className="page">
+            <div className="header">
+              <h1>🍎 Food for Thought</h1>
+              <p>Your AI-Powered Fitness Companion</p>
+            </div>
+
+            <nav className="nav">
+              <button
+                className={`nav-button ${currentPage === 'dashboard' ? 'active' : ''}`}
+                onClick={() => setCurrentPage('dashboard')}
+              >
+                📊 Dashboard
+              </button>
+              <button
+                className={`nav-button ${currentPage === 'profile' ? 'active' : ''}`}
+                onClick={() => setCurrentPage('profile')}
+              >
+                👤 Profile
+              </button>
+              <button
+                className={`nav-button ${currentPage === 'food' ? 'active' : ''}`}
+                onClick={() => setCurrentPage('food')}
+              >
+                🍽️ Food Log
+              </button>
+              <button
+                className={`nav-button ${currentPage === 'activity' ? 'active' : ''}`}
+                onClick={() => setCurrentPage('activity')}
+              >
+                💪 Activity
+              </button>
+            </nav>
+
+            {/* Tamagotchi - Always visible */}
+            <Tamagotchi userId={userId} />
+
+            {/* Main content */}
+            {renderPage()}
           </div>
-
-          <nav className="nav">
-            <button
-              className={`nav-button ${currentPage === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setCurrentPage('dashboard')}
-            >
-              📊 Dashboard
-            </button>
-            <button
-              className={`nav-button ${currentPage === 'profile' ? 'active' : ''}`}
-              onClick={() => setCurrentPage('profile')}
-            >
-              👤 Profile
-            </button>
-            <button
-              className={`nav-button ${currentPage === 'food' ? 'active' : ''}`}
-              onClick={() => setCurrentPage('food')}
-            >
-              🍽️ Food Log
-            </button>
-            <button
-              className={`nav-button ${currentPage === 'activity' ? 'active' : ''}`}
-              onClick={() => setCurrentPage('activity')}
-            >
-              💪 Activity
-            </button>
-          </nav>
-
-          {/* Tamagotchi - Always visible */}
-          <Tamagotchi userId={userId} />
-
-          {/* Main content */}
-          {renderPage()}
         </div>
       </div>
-    </div>
+    </HealthProvider>
   );
 }
 

@@ -36,6 +36,12 @@ app = Flask(__name__)
 CORS(app)
 
 # ----------------------------
+# Import health routes
+# ----------------------------
+from routes.health import health_bp
+app.register_blueprint(health_bp)
+
+# ----------------------------
 # endpoints
 # ----------------------------
 @app.route("/test", methods=["GET"])

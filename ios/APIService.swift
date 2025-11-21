@@ -14,15 +14,12 @@ class APIService {
     
     // MARK: - Configuration
     // 
-    // PRODUCTION (Vercel Deployment):
-    // Replace with your actual Vercel API URL after deploying server2
-    // Example: private let baseURL = "https://food-for-thought-api.vercel.app"
-    //
-    // FOR LOCAL TESTING:
+    // PRODUCTION (Render Deployment):
+    private let baseURL = "https://food-for-thought.onrender.com"
+    
+    // FOR LOCAL TESTING, uncomment:
     // Use your Mac's local IP (find with: ifconfig | grep "inet " | grep -v 127.0.0.1)
-    //
-    private let baseURL = "https://your-api-name.vercel.app"
-    // For local testing, uncomment:
+    // private let baseURL = "http://192.168.1.26:8080"
     // private let baseURL = "http://192.168.1.26:8080"
     
     private init() {}

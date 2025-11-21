@@ -13,14 +13,28 @@ const PORT = process.env.PORT || 8080;
 
 // Redis client
 const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  socket: {
+    tls: process.env.REDIS_URL?.startsWith('rediss://'),
+    rejectUnauthorized: false
+  }
 });
 
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.on('error', (err) => console.error('❌ Redis Client Error', err));
 redisClient.on('connect', () => console.log('✅ Connected to Redis'));
 
-// Connect to Redis
-redisClient.connect().catch(console.error);
+// Connect to Redis (with error handling for serverless)
+async function connectRedis() {
+  try {
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+    }
+  } catch (error) {
+    console.error('❌ Failed to connect to Redis:', error.message);
+  }
+}
+
+connectRedis();
 
 // Make Redis client available to routes
 app.locals.redis = redisClient;
@@ -84,3 +98,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   GET  /api/health/watch-status/:userId  - Check watch status`);
   console.log('============================================================');
 });
+
+// Vercel serverless export
+module.exports = app;

@@ -85,7 +85,7 @@ class APIService {
                 }
                 
                 let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                // Note: Don't use convertFromSnakeCase since models have explicit CodingKeys
                 let response = try decoder.decode(SyncResponse.self, from: data)
                 DispatchQueue.main.async {
                     completion(.success(response))

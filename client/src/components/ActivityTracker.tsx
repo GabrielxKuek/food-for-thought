@@ -50,10 +50,69 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
     setActivities(mockActivities);
   }, [userId]);
 
+  // Load data from backend
+  const loadDataFromBackend = React.useCallback(async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/health/${userId}`);
+      
+      if (!response.ok) {
+        console.error(`Backend returned ${response.status}`);
+        return;
+      }
+      
+      const data = await response.json();
+      
+      console.log('📥 Loaded data from Redis:', data);
+      
+      // Store heart rate data in context
+      if (data.heart_rates && data.heart_rates.length > 0) {
+        addHeartRates(data.heart_rates.map((hr: any) => ({
+          timestamp: hr.timestamp,
+          bpm: hr.bpm,
+          source: hr.source || 'Apple Watch'
+        })));
+        console.log(`✅ Loaded ${data.heart_rates.length} heart rate readings`);
+      }
+      
+      // Update current heart rate
+      if (data.current_heart_rate) {
+        setCurrentHeartRate(data.current_heart_rate.bpm);
+      }
+      
+      // Store activities in context
+      if (data.activities && data.activities.length > 0) {
+        addActivitiesToContext(data.activities);
+        
+        const realActivities: ActivitySession[] = data.activities.map((activity: any) => ({
+          userId,
+          start: activity.start,
+          end: activity.end,
+          activity_level: mapActivityType(activity.activity_type),
+          estimated_calories_burned: activity.calories_burned
+        }));
+        setActivities(realActivities);
+      }
+      
+      // Store steps in context
+      if (data.steps && data.steps.length > 0) {
+        addSteps(data.steps);
+      }
+      
+      updateSyncTime();
+    } catch (error) {
+      console.error('Failed to load data from backend:', error);
+    }
+  }, [userId, addHeartRates, setCurrentHeartRate, addActivitiesToContext, addSteps, updateSyncTime]);
+
   const checkWatchConnection = React.useCallback(() => {
     setIsConnected(true);
     
-    // Start periodic heart rate simulation
+    // Load real data from backend on mount if in backend mode
+    if (connectionMethod === 'backend') {
+      loadDataFromBackend();
+    }
+    
+    // Start periodic heart rate simulation for simulator mode
     const interval = setInterval(async () => {
       if (connectionMethod === 'simulator') {
         const mockHeartRate = Math.floor(Math.random() * (85 - 65 + 1)) + 65;
@@ -62,7 +121,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [connectionMethod]);
+  }, [connectionMethod, loadDataFromBackend, setCurrentHeartRate, setIsConnected]);
 
   useEffect(() => {
     // Check watch connection

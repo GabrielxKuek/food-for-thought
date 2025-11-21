@@ -63,6 +63,19 @@ export const getHeartRateLogs = async (userId: string, startDate?: string, endDa
   return response.data;
 };
 
+// New Health API endpoints (Redis backend)
+export const getUserHealthData = async (userId: string, limit?: number) => {
+  const response = await api.get(`/api/health/${userId}`, {
+    params: { limit }
+  });
+  return response.data;
+};
+
+export const syncHealthData = async (userId: string) => {
+  const response = await api.get(`/api/health/${userId}`);
+  return response.data;
+};
+
 export const getActivitySessions = async (userId: string, date?: string): Promise<ActivitySession[]> => {
   const response = await api.get(`/activities/${userId}`, {
     params: { date }

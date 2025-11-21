@@ -1,0 +1,312 @@
+.activity-tracker {
+  animation: fadeIn 0.5s ease-in;
+}
+
+.activity-tracker h2 {
+  color: #2d3436;
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+
+.watch-connection {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin: 20px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.connection-status.connected {
+  color: #43e97b;
+}
+
+.connection-status.disconnected {
+  color: #ff6b6b;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.connection-status.connected .status-dot {
+  background: #43e97b;
+}
+
+.connection-status.disconnected .status-dot {
+  background: #ff6b6b;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+.heart-rate-monitor {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 20px;
+  padding: 30px;
+  margin: 20px 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.heart-rate-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.heart-icon {
+  font-size: 4rem;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10% {
+    transform: scale(1.1);
+  }
+  20% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.1);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.heart-rate-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bpm {
+  font-size: 4rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.bpm-label {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.heart-rate-status {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  transition: all 0.3s ease;
+}
+
+.summary-item:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.summary-icon {
+  font-size: 3rem;
+}
+
+.summary-content {
+  flex: 1;
+}
+
+.summary-label {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.summary-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.activities-list {
+  margin-top: 30px;
+}
+
+.activities-list h3 {
+  color: #667eea;
+  margin-bottom: 15px;
+}
+
+.activity-item {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 15px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-left: 4px solid #667eea;
+}
+
+.activity-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.activity-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.activity-icon {
+  font-size: 2.5rem;
+}
+
+.activity-info h4 {
+  margin: 0 0 5px 0;
+  color: #2d3436;
+}
+
+.activity-time {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.activity-stats {
+  display: flex;
+  gap: 30px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.connection-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.connection-mode {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-left: 10px;
+  font-style: italic;
+}
+
+.connection-options {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin: 20px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.connection-options label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.connection-options label:hover {
+  background: #f8f9fa;
+  transform: translateX(5px);
+}
+
+.connection-options input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.connection-options input[type="radio"]:checked + * {
+  color: #667eea;
+}
+
+@media (max-width: 768px) {
+  .watch-connection {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .connection-buttons {
+    flex-direction: column;
+  }
+  
+  .connection-buttons button {
+    width: 100%;
+  }
+  
+  .heart-rate-display {
+    flex-direction: column;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .activity-stats {
+    flex-wrap: wrap;
+  }
+}

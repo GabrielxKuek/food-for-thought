@@ -1,0 +1,114 @@
+.tamagotchi-container {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.tamagotchi {
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  min-width: 300px;
+  transition: all 0.3s ease;
+}
+
+.tamagotchi.celebrating {
+  animation: celebrate 0.5s ease-in-out;
+}
+
+@keyframes celebrate {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-5deg); }
+  75% { transform: scale(1.1) rotate(5deg); }
+}
+
+.tamagotchi-character {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.character-emoji {
+  font-size: 5rem;
+  text-align: center;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.character-body {
+  display: none; /* Using emoji instead, but keeping for future customization */
+}
+
+.tamagotchi-stats {
+  width: 100%;
+}
+
+.stat-row {
+  margin: 10px 0;
+}
+
+.stat-label {
+  display: block;
+  font-weight: bold;
+  color: #2d3436;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.health-bar {
+  background: white;
+  border-radius: 15px;
+  height: 30px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.health-fill {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: all 0.5s ease;
+  border-radius: 15px;
+}
+
+.motivation-text {
+  background: white;
+  padding: 15px;
+  border-radius: 15px;
+  text-align: center;
+  font-weight: bold;
+  color: #2d3436;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .tamagotchi {
+    min-width: 250px;
+    padding: 20px;
+  }
+  
+  .character-emoji {
+    font-size: 4rem;
+  }
+}

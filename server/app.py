@@ -124,6 +124,13 @@ def classify_image(image):
     }
 
 # ----------------------------
+# Import health routes
+# ----------------------------
+from routes.health import health_bp
+app.register_blueprint(health_bp)
+
+# ----------------------------
+# endpoints
 # API Endpoints
 # ----------------------------
 @app.route("/", methods=["GET"])

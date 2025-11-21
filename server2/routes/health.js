@@ -91,7 +91,7 @@ router.post('/sync', async (req, res) => {
       success: true,
       message: 'Health data synced successfully',
       synced: {
-        heartRates: results.heart_rates_synced,
+        heart_rates: results.heart_rates_synced,
         activities: results.activities_synced,
         steps: results.steps_synced
       },

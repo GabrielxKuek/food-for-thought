@@ -12,8 +12,12 @@ class APIService {
     // Singleton instance
     static let shared = APIService()
     
-    // Backend URL - CHANGE THIS TO YOUR MAC'S IP ADDRESS
-    private let baseURL = "http://localhost:8080"
+    // MARK: - Configuration
+    // 
+    // FOR MVP (Local Backend on Mac):
+    // Your Mac's IP: 192.168.1.26
+    //
+    private let baseURL = "http://192.168.1.26:8080"
     
     private init() {}
     

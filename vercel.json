@@ -8,9 +8,17 @@
       "config": {
         "distDir": "build"
       }
+    },
+    {
+      "src": "server/app.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "server/app.py"
+    },
     {
       "src": "/static/(.*)",
       "dest": "/client/build/static/$1"

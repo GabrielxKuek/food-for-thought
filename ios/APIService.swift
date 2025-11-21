@@ -79,6 +79,11 @@ class APIService {
             }
             
             do {
+                // Debug: Print raw response
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("📥 Backend Response: \(jsonString)")
+                }
+                
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let response = try decoder.decode(SyncResponse.self, from: data)
@@ -86,6 +91,11 @@ class APIService {
                     completion(.success(response))
                 }
             } catch {
+                // Debug: Print decoding error
+                print("❌ Decoding Error: \(error)")
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("❌ Failed to decode: \(jsonString)")
+                }
                 DispatchQueue.main.async {
                     completion(.failure(error))
                 }

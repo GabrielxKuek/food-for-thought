@@ -14,10 +14,13 @@ class APIService {
     
     // MARK: - Configuration
     // 
-    // FOR MVP (Local Backend on Mac):
-    // Your Mac's IP: 192.168.1.26
-    //
-    private let baseURL = "http://192.168.1.26:8080"
+    // PRODUCTION (Render Deployment):
+    private let baseURL = "https://food-for-thought.onrender.com"
+    
+    // FOR LOCAL TESTING, uncomment:
+    // Use your Mac's local IP (find with: ifconfig | grep "inet " | grep -v 127.0.0.1)
+    // private let baseURL = "http://192.168.1.26:8080"
+    // private let baseURL = "http://192.168.1.26:8080"
     
     private init() {}
     
@@ -76,13 +79,23 @@ class APIService {
             }
             
             do {
+                // Debug: Print raw response
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("📥 Backend Response: \(jsonString)")
+                }
+                
                 let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                // Note: Don't use convertFromSnakeCase since models have explicit CodingKeys
                 let response = try decoder.decode(SyncResponse.self, from: data)
                 DispatchQueue.main.async {
                     completion(.success(response))
                 }
             } catch {
+                // Debug: Print decoding error
+                print("❌ Decoding Error: \(error)")
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("❌ Failed to decode: \(jsonString)")
+                }
                 DispatchQueue.main.async {
                     completion(.failure(error))
                 }

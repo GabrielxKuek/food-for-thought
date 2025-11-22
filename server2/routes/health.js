@@ -88,14 +88,23 @@ router.post('/sync', async (req, res) => {
     console.log(`✅ Synced data for ${user_id}:`, results);
 
     res.json({
-      status: 'success',
+      success: true,
       message: 'Health data synced successfully',
-      results
+      synced: {
+        heart_rates: results.heart_rates_synced,
+        activities: results.activities_synced,
+        steps: results.steps_synced
+      },
+      last_sync: new Date().toISOString()
     });
 
   } catch (error) {
     console.error('Sync error:', error);
-    res.status(500).json({ error: 'Failed to sync health data' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to sync health data',
+      error: error.message 
+    });
   }
 });
 

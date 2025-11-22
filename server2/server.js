@@ -56,6 +56,8 @@ app.get('/', (req, res) => {
     endpoints: {
       health_check: '/api/health/test',
       sync_data: 'POST /api/health/sync',
+      trigger_sync: 'POST /api/health/trigger-sync/:userId',
+      sync_status: 'GET /api/health/sync-status/:userId',
       get_user_data: 'GET /api/health/:userId',
       get_activities: 'GET /api/health/activities/:userId',
       watch_status: 'GET /api/health/watch-status/:userId'
@@ -93,6 +95,8 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   GET  /                                 - API info`);
   console.log(`   GET  /api/health/test                  - Health check`);
   console.log(`   POST /api/health/sync                  - Sync Apple Watch data`);
+  console.log(`   POST /api/health/trigger-sync/:userId  - Trigger watch sync`);
+  console.log(`   GET  /api/health/sync-status/:userId   - Check sync status`);
   console.log(`   GET  /api/health/:userId               - Get user health data`);
   console.log(`   GET  /api/health/activities/:userId    - Get user activities`);
   console.log(`   GET  /api/health/watch-status/:userId  - Check watch status`);

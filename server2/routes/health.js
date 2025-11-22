@@ -274,6 +274,76 @@ router.get('/watch-status/:userId', async (req, res) => {
   }
 });
 
+// POST /api/health/trigger-sync/:userId - Trigger a sync request from Apple Watch
+router.post('/trigger-sync/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const redis = getRedisClient(req);
+
+    // Store a sync request flag in Redis that the iOS app can poll
+    const syncRequest = {
+      userId,
+      requestedAt: new Date().toISOString(),
+      status: 'pending'
+    };
+    
+    await redis.set(`sync-request:${userId}`, JSON.stringify(syncRequest), {
+      EX: 300 // Expire after 5 minutes
+    });
+
+    // Return current data immediately
+    const heartRates = await getFromRedis(redis, `heartrates:${userId}`);
+    const activities = await getFromRedis(redis, `activities:${userId}`);
+    const steps = await getFromRedis(redis, `steps:${userId}`);
+
+    const currentHeartRate = heartRates.length > 0 ? 
+      heartRates.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0] : null;
+
+    console.log(`📱 Sync request triggered for ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Sync request sent to Apple Watch',
+      sync_requested_at: syncRequest.requestedAt,
+      current_data: {
+        heart_rate: currentHeartRate,
+        activities_count: activities.length,
+        steps_count: steps.length
+      },
+      note: 'iOS app will sync data in background'
+    });
+
+  } catch (error) {
+    console.error('Trigger sync error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to trigger sync',
+      message: error.message 
+    });
+  }
+});
+
+// GET /api/health/sync-status/:userId - Check if there's a pending sync request
+router.get('/sync-status/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const redis = getRedisClient(req);
+
+    const syncRequestData = await redis.get(`sync-request:${userId}`);
+    const syncRequest = syncRequestData ? JSON.parse(syncRequestData) : null;
+
+    res.json({
+      user_id: userId,
+      has_pending_sync: !!syncRequest,
+      sync_request: syncRequest
+    });
+
+  } catch (error) {
+    console.error('Get sync status error:', error);
+    res.status(500).json({ error: 'Failed to check sync status' });
+  }
+});
+
 // GET /api/health/test - Health check
 router.get('/test', (req, res) => {
   res.json({

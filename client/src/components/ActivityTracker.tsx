@@ -24,103 +24,96 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
     updateSyncTime,
   } = useHealth();
 
-  // Load data from backend API
-  const loadDataFromBackend = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      // Get data for the last 5 days
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 5);
-      
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/health/${userId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&limit=200`);
-      
-      if (!response.ok) {
-        console.error(`Backend returned ${response.status}`);
-        return;
-      }
-      
-      const data = await response.json();
-      
-      console.log('📥 Loaded data from Redis (last 5 days):', data);
-      
-      // Store heart rate data in context
-      if (data.heart_rates && data.heart_rates.length > 0) {
-        addHeartRates(data.heart_rates.map((hr: any) => ({
-          timestamp: hr.timestamp,
-          bpm: hr.bpm,
-          source: hr.source || 'Apple Watch'
-        })));
-        console.log(`✅ Loaded ${data.heart_rates.length} heart rate readings`);
-
-        // Update current heart rate from most recent reading
-        const sortedHeartRates = data.heart_rates.sort((a: any, b: any) => 
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-        const mostRecentHeartRate = sortedHeartRates[0];
-        setCurrentHeartRate(mostRecentHeartRate.bpm);
-        console.log(`✅ Set current heart rate to ${mostRecentHeartRate.bpm} BPM from ${new Date(mostRecentHeartRate.timestamp).toLocaleString()}`);
-      }
-      
-      // Also check if there's a specific current_heart_rate field (backup)
-      if (data.current_heart_rate) {
-        setCurrentHeartRate(data.current_heart_rate.bpm);
-        console.log(`✅ Updated current heart rate from API: ${data.current_heart_rate.bpm} BPM`);
-      }
-      
-      // Store activities in context
-      if (data.activities && data.activities.length > 0) {
-        addActivitiesToContext(data.activities);
-        
-        const realActivities: ActivitySession[] = data.activities.map((activity: any) => ({
-          userId,
-          start: activity.start,
-          end: activity.end,
-          activity_level: mapActivityType(activity.activity_type),
-          estimated_calories_burned: activity.calories_burned,
-          activity_type: activity.activity_type,
-          avg_heart_rate: activity.avg_heart_rate,
-          distance_meters: activity.distance_meters,
-          duration_minutes: activity.duration_minutes
-        } as any));
-
-        // Remove duplicates based on start time, activity type, and duration
-        const uniqueActivities = removeDuplicateActivities(realActivities);
-
-        setActivities(uniqueActivities);
-        console.log(`✅ Loaded ${uniqueActivities.length} unique activities from last 5 days (${realActivities.length - uniqueActivities.length} duplicates removed)`);
-      }
-      
-      // Store steps in context
-      if (data.steps && data.steps.length > 0) {
-        addSteps(data.steps);
-      }
-      
-      // Update sync time
-      if (data.summary?.last_sync) {
-        setLastSyncTime(data.summary.last_sync);
-      }
-      
-      updateSyncTime();
-    } catch (error) {
-      console.error('Failed to load data from backend:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId, addHeartRates, setCurrentHeartRate, addActivitiesToContext, addSteps, updateSyncTime, setLastSyncTime]);
-
   useEffect(() => {
     // Auto-load data on mount
-    setIsConnected(true);
-    loadDataFromBackend();
+    const loadData = async () => {
+      setIsConnected(true);
+      try {
+        // Get data for the last 5 days
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 5);
+        
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/health/${userId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&limit=200`);
+        
+        if (!response.ok) {
+          throw new Error(`Backend returned ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setIsConnected(true);
+        
+        // Store heart rate data in context
+        if (data.heart_rates && data.heart_rates.length > 0) {
+          addHeartRates(data.heart_rates.map((hr: any) => ({
+            timestamp: hr.timestamp,
+            bpm: hr.bpm,
+            source: hr.source || 'Apple Watch'
+          })));
+          console.log(`✅ Loaded ${data.heart_rates.length} heart rate readings`);
+
+          // Update current heart rate from most recent reading
+          const sortedHeartRates = data.heart_rates.sort((a: any, b: any) => 
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+          const mostRecentHeartRate = sortedHeartRates[0];
+          setCurrentHeartRate(mostRecentHeartRate.bpm);
+          console.log(`✅ Set current heart rate to ${mostRecentHeartRate.bpm} BPM from ${new Date(mostRecentHeartRate.timestamp).toLocaleString()}`);
+        }
+        
+        // Also check if there's a specific current_heart_rate field (backup)
+        if (data.current_heart_rate) {
+          setCurrentHeartRate(data.current_heart_rate.bpm);
+          console.log(`✅ Updated current heart rate from API: ${data.current_heart_rate.bpm} BPM`);
+        }
+
+        // Store activities with correct Redis field names (matching API response)
+        if (data.activities && data.activities.length > 0) {
+          addActivitiesToContext(data.activities);
+          
+          const realActivities: ActivitySession[] = data.activities.map((activity: any) => ({
+            userId,
+            start: activity.start,
+            end: activity.end,
+            activity_level: mapActivityType(activity.activity_type),
+            estimated_calories_burned: activity.calories_burned,
+            activity_type: activity.activity_type,
+            avg_heart_rate: activity.avg_heart_rate,
+            distance_meters: activity.distance_meters,
+            duration_minutes: activity.duration_minutes
+          } as any));
+
+          // Remove duplicates based on start time, activity type, and duration
+          const uniqueActivities = removeDuplicateActivities(realActivities);
+          setActivities(uniqueActivities);
+        }
+        
+        // Store steps in context
+        if (data.steps && data.steps.length > 0) {
+          addSteps(data.steps);
+        }
+
+        // Update sync time
+        if (data.summary?.last_sync) {
+          setLastSyncTime(data.summary.last_sync);
+        }
+        
+        updateSyncTime();
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        setIsConnected(false);
+      }
+    };
+
+    // Load initially
+    loadData();
     
     // Refresh every 30 seconds
-    const intervalId = setInterval(() => {
-      loadDataFromBackend();
-    }, 30000);
+    const intervalId = setInterval(loadData, 30000);
     
     return () => clearInterval(intervalId);
-  }, [loadDataFromBackend, setIsConnected]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]); // Only depend on userId to prevent infinite loop
 
   // Utility function to remove duplicate activities
   const removeDuplicateActivities = (activities: ActivitySession[]): ActivitySession[] => {

@@ -56,6 +56,38 @@
   50% { transform: translateY(-8px); }
 }
 
+/* Character Navigation Chevrons */
+.character-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.character-nav:hover {
+  background: #ffffff;
+  color: #111827;
+}
+
+.character-nav.prev {
+  left: 10px;
+}
+
+.character-nav.next {
+  right: 10px;
+}
+
 .speech-bubble {
   position: absolute;
   bottom: 100%;

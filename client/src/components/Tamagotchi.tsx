@@ -1,21 +1,97 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TamagotchiState } from '../types';
 import { useHealth } from '../context/HealthContext';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './Tamagotchi.css';
 
 interface TamagotchiProps {
   userId: string;
 }
 
+type CharacterType = 'omelette' | 'mindy' | 'xR4PT0Rx';
+
+interface Character {
+  id: CharacterType;
+  name: string;
+  normalImage: string;
+  fatImage: string;
+  hungryMessages: string[];
+  fullMessages: string[];
+}
+
+const CHARACTERS: Character[] = [
+  {
+    id: 'omelette',
+    name: 'Omelette',
+    normalImage: '/omelette.png',
+    fatImage: '/fat-omelette.png',
+    hungryMessages: [
+      "You should eat more!",
+      "I'm getting hungry...",
+      "Time for a snack?",
+      "Feed me please!",
+      "Let's eat something!",
+    ],
+    fullMessages: [
+      "I'm so full!",
+      "That was delicious!",
+      "No more food please!",
+      "I need a nap...",
+      "Great meal!",
+    ],
+  },
+  {
+    id: 'mindy',
+    name: 'Mindy',
+    normalImage: '/mindy.png',
+    fatImage: '/mindy.png',
+    hungryMessages: [
+      "Let's grab a bite!",
+      "Feeling a bit peckish...",
+      "Snack time?",
+      "I could use some fuel!",
+      "How about some food?",
+    ],
+    fullMessages: [
+      "That hit the spot!",
+      "Feeling satisfied!",
+      "Perfect portion!",
+      "Time to rest...",
+      "Yummy!",
+    ],
+  },
+  {
+    id: 'xR4PT0Rx',
+    name: 'xR4PT0Rx',
+    normalImage: '/xR4PT0Rx.png',
+    fatImage: '/xR4PT0Rx.png',
+    hungryMessages: [
+      "ENERGY LOW... NEED FUEL",
+      "INITIATING HUNGER PROTOCOL",
+      "FOOD.EXE REQUIRED",
+      "SCANNING FOR NUTRIENTS...",
+      "CALORIE DEFICIT DETECTED",
+    ],
+    fullMessages: [
+      "FUEL TANK: FULL",
+      "ENERGY RESTORED",
+      "OPTIMAL NUTRITION ACHIEVED",
+      "ENTERING DIGEST MODE...",
+      "MISSION COMPLETE",
+    ],
+  },
+];
+
 const Tamagotchi: React.FC<TamagotchiProps> = ({ userId }) => {
   const { foodLogCount } = useHealth();
   
+  const [currentCharacterIndex, setCurrentCharacterIndex] = useState(0);
+  const currentCharacter = CHARACTERS[currentCharacterIndex];
+  
   // Calculate health based on food log count
-  // Health decreases when overeating (fat state)
   const calculateHealth = useCallback(() => {
-    if (foodLogCount === 0) return 70; // Hungry but okay
-    if (foodLogCount <= 3) return 85 + (foodLogCount * 5); // 90-100% for balanced eating
-    // Health decreases as overeating increases
+    if (foodLogCount === 0) return 70;
+    if (foodLogCount <= 3) return 85 + (foodLogCount * 5);
     return Math.max(20, 100 - ((foodLogCount - 3) * 15));
   }, [foodLogCount]);
 
@@ -56,33 +132,34 @@ const Tamagotchi: React.FC<TamagotchiProps> = ({ userId }) => {
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [speechBubble, setSpeechBubble] = useState<string | null>(null);
 
-  // Determine if Omelette is fat based on food log count
+  // Determine if character is fat based on food log count
   const isFat = foodLogCount > 0;
-  const characterSrc = isFat ? '/fat-omelette.png' : '/omelette.png';
-  const characterName = isFat ? 'Omelette (full)' : 'Omelette (hungry)';
+  const characterSrc = isFat ? currentCharacter.fatImage : currentCharacter.normalImage;
+  const characterName = isFat 
+    ? `${currentCharacter.name} (full)` 
+    : `${currentCharacter.name} (hungry)`;
 
   // Get speech based on fat/hungry state
   const getSpeechMessage = useCallback(() => {
     if (isFat) {
-      const fullMessages = [
-        "I'm so full!",
-        "That was delicious!",
-        "No more food please!",
-        "I need a nap...",
-        "Great meal!",
-      ];
-      return fullMessages[Math.floor(Math.random() * fullMessages.length)];
+      const messages = currentCharacter.fullMessages;
+      return messages[Math.floor(Math.random() * messages.length)];
     } else {
-      const hungryMessages = [
-        "You should eat more!",
-        "I'm getting hungry...",
-        "Time for a snack?",
-        "Feed me please!",
-        "Let's eat something!",
-      ];
-      return hungryMessages[Math.floor(Math.random() * hungryMessages.length)];
+      const messages = currentCharacter.hungryMessages;
+      return messages[Math.floor(Math.random() * messages.length)];
     }
-  }, [isFat]);
+  }, [isFat, currentCharacter]);
+
+  // Character navigation
+  const nextCharacter = () => {
+    setCurrentCharacterIndex((prev) => (prev + 1) % CHARACTERS.length);
+    setIsAnimating(true);
+  };
+
+  const prevCharacter = () => {
+    setCurrentCharacterIndex((prev) => (prev - 1 + CHARACTERS.length) % CHARACTERS.length);
+    setIsAnimating(true);
+  };
 
   // Handle "y" key press to toggle speech mode
   useEffect(() => {
@@ -103,13 +180,11 @@ const Tamagotchi: React.FC<TamagotchiProps> = ({ userId }) => {
       return;
     }
 
-    // Show immediately when enabled
     setSpeechBubble(getSpeechMessage());
 
     const interval = setInterval(() => {
       setSpeechBubble(getSpeechMessage());
       
-      // Hide after 5 seconds
       setTimeout(() => {
         setSpeechBubble(null);
       }, 5000);
@@ -118,7 +193,7 @@ const Tamagotchi: React.FC<TamagotchiProps> = ({ userId }) => {
     return () => clearInterval(interval);
   }, [speechEnabled, getSpeechMessage]);
 
-  // Celebration animation when state changes
+  // Animation when state changes
   useEffect(() => {
     setIsAnimating(true);
     setTimeout(() => setIsAnimating(false), 500);
@@ -137,6 +212,10 @@ const Tamagotchi: React.FC<TamagotchiProps> = ({ userId }) => {
           className="tamagotchi-environment"
           style={{ backgroundImage: 'url(/background.jpg)' }}
         >
+          <button className="character-nav prev" onClick={prevCharacter}>
+            <ChevronLeft size={16} />
+          </button>
+          
           <div className={`tamagotchi-character ${isAnimating ? 'celebrating' : ''}`}>
             {speechBubble && (
               <div className="speech-bubble">
@@ -145,10 +224,14 @@ const Tamagotchi: React.FC<TamagotchiProps> = ({ userId }) => {
             )}
             <img 
               src={characterSrc} 
-              alt="Omelette"
+              alt={currentCharacter.name}
               className="character-image"
             />
           </div>
+          
+          <button className="character-nav next" onClick={nextCharacter}>
+            <ChevronRight size={16} />
+          </button>
         </div>
 
         <div className="tamagotchi-controls">

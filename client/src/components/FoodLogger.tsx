@@ -102,7 +102,9 @@ const FoodLogger: React.FC<FoodLoggerProps> = ({ userId }) => {
     }
   });
 
-  const parseNutrientValue = (value: string): number => {
+  // Safe parsing function that handles undefined/null values
+  const parseNutrientValue = (value: string | undefined | null): number => {
+    if (!value) return 0;
     const match = value.match(/[\d.]+/);
     return match ? parseFloat(match[0]) : 0;
   };
@@ -152,7 +154,7 @@ const FoodLogger: React.FC<FoodLoggerProps> = ({ userId }) => {
   };
 
   const selectSearchResult = (result: SearchResult) => {
-    const nutritionalInfo = result.nutritional_information;
+    const nutritionalInfo = result.nutritional_information || {};
     
     setFormData({
       ...formData,
@@ -446,10 +448,10 @@ const FoodLogger: React.FC<FoodLoggerProps> = ({ userId }) => {
                       <div className="result-category">{result.category}</div>
                     </div>
                     <div className="result-nutrition">
-                      <span>{result.nutritional_information.energy}</span>
-                      <span>P: {result.nutritional_information.protein}</span>
-                      <span>C: {result.nutritional_information.carbohydrates}</span>
-                      <span>F: {result.nutritional_information.fat}</span>
+                      <span>{result.nutritional_information?.energy || 'N/A'}</span>
+                      <span>P: {result.nutritional_information?.protein || 'N/A'}</span>
+                      <span>C: {result.nutritional_information?.carbohydrates || 'N/A'}</span>
+                      <span>F: {result.nutritional_information?.fat || 'N/A'}</span>
                     </div>
                     <button className="add-button">
                       <Plus size={14} />

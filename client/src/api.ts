@@ -56,23 +56,30 @@ export const syncAppleWatchData = async (userId: string, data: any): Promise<voi
   await api.post('/sync-watch', { userId, ...data });
 };
 
+export const triggerWatchSync = async (userId: string): Promise<{ success: boolean; message: string; current_data: any }> => {
+  const response = await api.post(`/api/health/trigger-sync/${userId}`);
+  return response.data;
+};
+
+export const getWatchSyncStatus = async (userId: string): Promise<{ has_pending_sync: boolean; sync_request: any }> => {
+  const response = await api.get(`/api/health/sync-status/${userId}`);
+  return response.data;
+};
+
+export const getWatchStatus = async (userId: string): Promise<{ is_connected: boolean; last_heart_rate: any }> => {
+  const response = await api.get(`/api/health/watch-status/${userId}`);
+  return response.data;
+};
+
+export const getHealthData = async (userId: string): Promise<any> => {
+  const response = await api.get(`/api/health/${userId}`);
+  return response.data;
+};
+
 export const getHeartRateLogs = async (userId: string, startDate?: string, endDate?: string): Promise<HeartRateLog[]> => {
   const response = await api.get(`/heart-rate/${userId}`, {
     params: { startDate, endDate }
   });
-  return response.data;
-};
-
-// New Health API endpoints (Redis backend)
-export const getUserHealthData = async (userId: string, limit?: number) => {
-  const response = await api.get(`/api/health/${userId}`, {
-    params: { limit }
-  });
-  return response.data;
-};
-
-export const syncHealthData = async (userId: string) => {
-  const response = await api.get(`/api/health/${userId}`);
   return response.data;
 };
 

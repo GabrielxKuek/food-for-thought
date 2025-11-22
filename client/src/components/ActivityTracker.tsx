@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { ActivitySession } from '../types';
 import { useHealth } from '../context/HealthContext';
-import HeartRateGraph from './HeartRateGraph';
-import { Heart, Flame, Clock, Watch, RefreshCw, Bluetooth, Gamepad2, Radio, Zap, PersonStanding, Activity } from 'lucide-react';
+import { Heart, Flame, Clock, Watch, RefreshCw, Zap, PersonStanding, Activity } from 'lucide-react';
 import './ActivityTracker.css';
 
 interface ActivityTrackerProps {
-  userId: string;
+  userId?: string;
 }
 
-const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
+const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' }) => {
   const [activities, setActivities] = useState<ActivitySession[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   
   const {
     currentHeartRate,
@@ -25,8 +26,14 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
 
   // Load data from backend API
   const loadDataFromBackend = React.useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/health/${userId}`);
+      // Get data for the last 5 days
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 5);
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/health/${userId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&limit=200`);
       
       if (!response.ok) {
         console.error(`Backend returned ${response.status}`);
@@ -35,7 +42,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
       
       const data = await response.json();
       
-      console.log('📥 Loaded data from Redis:', data);
+      console.log('📥 Loaded data from Redis (last 5 days):', data);
       
       // Store heart rate data in context
       if (data.heart_rates && data.heart_rates.length > 0) {
@@ -45,11 +52,20 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
           source: hr.source || 'Apple Watch'
         })));
         console.log(`✅ Loaded ${data.heart_rates.length} heart rate readings`);
+
+        // Update current heart rate from most recent reading
+        const sortedHeartRates = data.heart_rates.sort((a: any, b: any) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        const mostRecentHeartRate = sortedHeartRates[0];
+        setCurrentHeartRate(mostRecentHeartRate.bpm);
+        console.log(`✅ Set current heart rate to ${mostRecentHeartRate.bpm} BPM from ${new Date(mostRecentHeartRate.timestamp).toLocaleString()}`);
       }
       
-      // Update current heart rate
+      // Also check if there's a specific current_heart_rate field (backup)
       if (data.current_heart_rate) {
         setCurrentHeartRate(data.current_heart_rate.bpm);
+        console.log(`✅ Updated current heart rate from API: ${data.current_heart_rate.bpm} BPM`);
       }
       
       // Store activities in context
@@ -60,14 +76,19 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
           userId,
           start: activity.start,
           end: activity.end,
-          activity_level: mapActivityType(activity.activityType),
-          estimated_calories_burned: activity.caloriesBurned,
-          activity_type: activity.activityType,
-          avg_heart_rate: activity.avgHeartRate,
-          distance_meters: activity.distanceMeters
+          activity_level: mapActivityType(activity.activity_type),
+          estimated_calories_burned: activity.calories_burned,
+          activity_type: activity.activity_type,
+          avg_heart_rate: activity.avg_heart_rate,
+          distance_meters: activity.distance_meters,
+          duration_minutes: activity.duration_minutes
         } as any));
-        setActivities(realActivities);
-        console.log(`✅ Loaded ${realActivities.length} activities`);
+
+        // Remove duplicates based on start time, activity type, and duration
+        const uniqueActivities = removeDuplicateActivities(realActivities);
+
+        setActivities(uniqueActivities);
+        console.log(`✅ Loaded ${uniqueActivities.length} unique activities from last 5 days (${realActivities.length - uniqueActivities.length} duplicates removed)`);
       }
       
       // Store steps in context
@@ -75,11 +96,18 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
         addSteps(data.steps);
       }
       
+      // Update sync time
+      if (data.summary?.last_sync) {
+        setLastSyncTime(data.summary.last_sync);
+      }
+      
       updateSyncTime();
     } catch (error) {
       console.error('Failed to load data from backend:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [userId, addHeartRates, setCurrentHeartRate, addActivitiesToContext, addSteps, updateSyncTime]);
+  }, [userId, addHeartRates, setCurrentHeartRate, addActivitiesToContext, addSteps, updateSyncTime, setLastSyncTime]);
 
   useEffect(() => {
     // Auto-load data on mount
@@ -94,10 +122,27 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
     return () => clearInterval(intervalId);
   }, [loadDataFromBackend, setIsConnected]);
 
+  // Utility function to remove duplicate activities
+  const removeDuplicateActivities = (activities: ActivitySession[]): ActivitySession[] => {
+    return activities.filter((activity, index, self) => {
+      // Create a unique key based on multiple properties
+      const activityKey = `${activity.start}-${(activity as any).activity_type}-${(activity as any).duration_minutes || 0}-${activity.estimated_calories_burned}-${(activity as any).avg_heart_rate || 0}`;
+      return index === self.findIndex(a => {
+        const aKey = `${a.start}-${(a as any).activity_type}-${(a as any).duration_minutes || 0}-${a.estimated_calories_burned}-${(a as any).avg_heart_rate || 0}`;
+        return aKey === activityKey;
+      });
+    });
+  };
+
   const syncWithAppleWatch = async () => {
+    setLoading(true);
     try {
-      // Simply fetch data from Redis and display it
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/health/${userId}`);
+      // Get data for the last 5 days
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 5);
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/health/${userId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&limit=200`);
       
       if (!response.ok) {
         throw new Error(`Backend returned ${response.status}`);
@@ -113,14 +158,23 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
           bpm: hr.bpm,
           source: hr.source || 'Apple Watch'
         })));
+
+        // Update current heart rate from most recent reading
+        const sortedHeartRates = data.heart_rates.sort((a: any, b: any) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        const mostRecentHeartRate = sortedHeartRates[0];
+        setCurrentHeartRate(mostRecentHeartRate.bpm);
+        console.log(`✅ Synced current heart rate to ${mostRecentHeartRate.bpm} BPM from ${new Date(mostRecentHeartRate.timestamp).toLocaleString()}`);
       }
       
-      // Update current heart rate
+      // Also check if there's a specific current_heart_rate field (backup)
       if (data.current_heart_rate) {
         setCurrentHeartRate(data.current_heart_rate.bpm);
+        console.log(`✅ Synced current heart rate from API: ${data.current_heart_rate.bpm} BPM`);
       }
       
-      // Store activities with correct Redis field names
+      // Store activities with correct Redis field names (matching API response)
       if (data.activities && data.activities.length > 0) {
         addActivitiesToContext(data.activities);
         
@@ -128,26 +182,38 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
           userId,
           start: activity.start,
           end: activity.end,
-          activity_level: mapActivityType(activity.activityType),
-          estimated_calories_burned: activity.caloriesBurned,
-          activity_type: activity.activityType,
-          avg_heart_rate: activity.avgHeartRate,
-          distance_meters: activity.distanceMeters
+          activity_level: mapActivityType(activity.activity_type),
+          estimated_calories_burned: activity.calories_burned,
+          activity_type: activity.activity_type,
+          avg_heart_rate: activity.avg_heart_rate,
+          distance_meters: activity.distance_meters,
+          duration_minutes: activity.duration_minutes
         } as any));
-        setActivities(realActivities);
+
+        // Remove duplicates based on start time, activity type, and duration
+        const uniqueActivities = removeDuplicateActivities(realActivities);
+
+        setActivities(uniqueActivities);
       }
       
       // Store steps in context
       if (data.steps && data.steps.length > 0) {
         addSteps(data.steps);
       }
+
+      // Update sync time
+      if (data.summary?.last_sync) {
+        setLastSyncTime(data.summary.last_sync);
+      }
       
       updateSyncTime();
-      alert(`✅ Loaded from Redis!\n${data.summary.total_heart_rates || 0} heart rates\n${data.summary.total_activities || 0} activities\n${data.summary.total_calories_burned || 0} calories burned`);
+      alert(`✅ Loaded from Redis (Last 5 Days)!\n${data.summary.total_heart_rates || 0} heart rates\n${data.summary.total_activities || 0} activities\n${data.summary.total_calories_burned || 0} calories burned`);
     } catch (error) {
       console.error('Failed to load data:', error);
       alert('❌ Failed to load data. Make sure backend is running.');
       setIsConnected(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -196,9 +262,41 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
     }
   };
 
-  const totalCaloriesBurned = activities.reduce(
+  // Calculate today's activities and stats
+  const today = new Date().toDateString();
+  const todaysActivities = activities.filter(activity => 
+    new Date(activity.start).toDateString() === today
+  );
+  
+  const todaysCalories = todaysActivities.reduce(
     (sum, activity) => sum + activity.estimated_calories_burned,
     0
+  );
+
+  // Calculate daily averages over the last 5 days
+  const dailyCaloriesMap = new Map();
+  const last5Days = [];
+  
+  for (let i = 0; i < 5; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateString = date.toDateString();
+    last5Days.push(dateString);
+    dailyCaloriesMap.set(dateString, 0);
+  }
+
+  // Group activities by day
+  activities.forEach(activity => {
+    const activityDate = new Date(activity.start).toDateString();
+    if (dailyCaloriesMap.has(activityDate)) {
+      dailyCaloriesMap.set(activityDate, 
+        dailyCaloriesMap.get(activityDate) + activity.estimated_calories_burned
+      );
+    }
+  });
+
+  const avgDailyCalories = Math.round(
+    Array.from(dailyCaloriesMap.values()).reduce((sum, calories) => sum + calories, 0) / 5
   );
 
   return (
@@ -211,10 +309,15 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
           {isConnected ? '⌚ Apple Watch Connected' : '⌚ Apple Watch Disconnected'}
         </div>
         <div className="connection-buttons">
-          <button className="button" onClick={syncWithAppleWatch}>
-            <RefreshCw size={14} />
-            Sync
+          <button className="button" onClick={syncWithAppleWatch} disabled={loading}>
+            <RefreshCw size={14} className={loading ? 'spinning' : ''} />
+            {loading ? 'Syncing...' : 'Sync'}
           </button>
+          {lastSyncTime && (
+            <small className="last-sync">
+              Last sync: {new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </small>
+          )}
         </div>
       </div>
 
@@ -235,8 +338,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
         </div>
       )}
 
-      <HeartRateGraph timeRange="hour" />
-
       <div className="card">
         <h3>Today's Summary</h3>
         <div className="summary-stats">
@@ -245,8 +346,8 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
               <Flame size={20} />
             </div>
             <div className="summary-content">
-              <div className="summary-label">Calories Burned</div>
-              <div className="summary-value">{totalCaloriesBurned} kcal</div>
+              <div className="summary-label">Today's Calories</div>
+              <div className="summary-value">{todaysCalories} kcal</div>
             </div>
           </div>
           <div className="summary-item">
@@ -254,70 +355,164 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
               <Clock size={20} />
             </div>
             <div className="summary-content">
-              <div className="summary-label">Active Sessions</div>
+              <div className="summary-label">Today's Sessions</div>
+              <div className="summary-value">{todaysActivities.length}</div>
+            </div>
+          </div>
+          <div className="summary-item">
+            <div className="summary-icon">
+              <Flame size={20} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-label">5-Day Avg Calories</div>
+              <div className="summary-value">{avgDailyCalories} kcal/day</div>
+            </div>
+          </div>
+          <div className="summary-item">
+            <div className="summary-icon">
+              <Activity size={20} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-label">Total Sessions (5 days)</div>
               <div className="summary-value">{activities.length}</div>
             </div>
           </div>
+          {todaysActivities.length > 0 && (
+            <>
+              <div className="summary-item">
+                <div className="summary-icon">
+                  <Watch size={20} />
+                </div>
+                <div className="summary-content">
+                  <div className="summary-label">Today's Duration</div>
+                  <div className="summary-value">
+                    {todaysActivities.reduce((sum, act) => {
+                      const duration = (act as any).duration_minutes || 
+                        Math.floor((new Date(act.end).getTime() - new Date(act.start).getTime()) / 60000);
+                      return sum + duration;
+                    }, 0)} min
+                  </div>
+                </div>
+              </div>
+              <div className="summary-item">
+                <div className="summary-icon">
+                  <Heart size={20} />
+                </div>
+                <div className="summary-content">
+                  <div className="summary-label">Today's Avg HR</div>
+                  <div className="summary-value">
+                    {Math.round(
+                      todaysActivities
+                        .filter(act => (act as any).avg_heart_rate)
+                        .reduce((sum, act) => sum + ((act as any).avg_heart_rate || 0), 0) / 
+                      todaysActivities.filter(act => (act as any).avg_heart_rate).length
+                    ) || '--'} BPM
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       <div className="activities-list">
-        <h3>Activity Sessions</h3>
+        <h3>Activity Sessions (Last 5 Days)</h3>
         {activities.length === 0 ? (
-          <p className="empty-state">No activities recorded yet. Click "Sync Now" to load your activities.</p>
+          <p className="empty-state">No activities recorded in the last 5 days. Click "Sync" to load your recent activities.</p>
         ) : (
-          activities.map((activity, index) => {
-            const startTime = new Date(activity.start);
-            const endTime = new Date(activity.end);
-            const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 60000);
-            
-            // Get full activity details
-            const activityType = (activity as any).activity_type || activity.activity_level;
-            const avgHeartRate = (activity as any).avg_heart_rate;
-            const distance = (activity as any).distance_meters;
+          (() => {
+            // Group activities by date
+            const activitiesByDate = activities.reduce((groups: { [key: string]: typeof activities }, activity) => {
+              const date = new Date(activity.start).toDateString();
+              if (!groups[date]) groups[date] = [];
+              groups[date].push(activity);
+              return groups;
+            }, {});
 
-            return (
-              <div 
-                key={index} 
-                className="activity-item"
-                style={{ borderLeftColor: getActivityColor(activity.activity_level) }}
-              >
-                <div className="activity-header">
-                  <div className="activity-icon">
-                    {getActivityIcon(activity.activity_level)}
-                  </div>
-                  <div className="activity-info">
-                    <h4>{activityType.replace(/_/g, ' ').toUpperCase()}</h4>
-                    <span className="activity-time">
-                      {startTime.toLocaleDateString()} at {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-                <div className="activity-stats">
-                  <div className="stat">
-                    <span className="stat-label">Duration</span>
-                    <span className="stat-value">{duration} min</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-label">Calories</span>
-                    <span className="stat-value">{activity.estimated_calories_burned} kcal</span>
-                  </div>
-                  {avgHeartRate && (
-                    <div className="stat">
-                      <span className="stat-label">Avg HR</span>
-                      <span className="stat-value">{avgHeartRate} BPM</span>
-                    </div>
-                  )}
-                  {distance && (
-                    <div className="stat">
-                      <span className="stat-label">Distance</span>
-                      <span className="stat-value">{(distance / 1000).toFixed(2)} km</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+            // Sort dates (most recent first)
+            const sortedDates = Object.keys(activitiesByDate).sort((a, b) => 
+              new Date(b).getTime() - new Date(a).getTime()
             );
-          })
+
+            return sortedDates.map(date => (
+              <div key={date} className="day-group">
+                <h4 className="day-header">
+                  {date === new Date().toDateString() ? 'Today' : new Date(date).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                  <span className="day-stats">
+                    {activitiesByDate[date].length} session{activitiesByDate[date].length !== 1 ? 's' : ''} • {' '}
+                    {activitiesByDate[date].reduce((sum, act) => sum + act.estimated_calories_burned, 0)} kcal
+                  </span>
+                </h4>
+                {activitiesByDate[date].map((activity, index) => {
+                  const startTime = new Date(activity.start);
+                  const endTime = new Date(activity.end);
+                  
+                  // Calculate duration from activity data or timestamps
+                  const activityDuration = (activity as any).duration_minutes || 
+                    Math.floor((endTime.getTime() - startTime.getTime()) / 60000);
+                  
+                  // Get full activity details (matching Redis data structure)
+                  const activityType = (activity as any).activity_type || activity.activity_level;
+                  const avgHeartRate = (activity as any).avg_heart_rate;
+                  const distance = (activity as any).distance_meters;
+                  const calories = activity.estimated_calories_burned;
+
+                  return (
+                    <div 
+                      key={`${date}-${index}`} 
+                      className="activity-item"
+                      style={{ borderLeftColor: getActivityColor(activity.activity_level) }}
+                    >
+                      <div className="activity-header">
+                        <div className="activity-icon">
+                          {getActivityIcon(activity.activity_level)}
+                        </div>
+                        <div className="activity-info">
+                          <h4>{activityType.replace(/_/g, ' ').toUpperCase()}</h4>
+                          <span className="activity-time">
+                            {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="activity-stats">
+                        <div className="stat">
+                          <span className="stat-label">Duration</span>
+                          <span className="stat-value">{activityDuration} min</span>
+                        </div>
+                        <div className="stat">
+                          <span className="stat-label">Calories</span>
+                          <span className="stat-value">{calories} kcal</span>
+                        </div>
+                        {avgHeartRate && avgHeartRate > 0 && (
+                          <div className="stat">
+                            <span className="stat-label">Avg HR</span>
+                            <span className="stat-value">{avgHeartRate} BPM</span>
+                          </div>
+                        )}
+                        {distance && distance > 0 && (
+                          <div className="stat">
+                            <span className="stat-label">Distance</span>
+                            <span className="stat-value">{(distance / 1000).toFixed(2)} km</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Additional Redis data display */}
+                      <div className="activity-details">
+                        <small className="activity-meta">
+                          End: {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {calories > 0 && ` • ${Math.round(calories / activityDuration)} kcal/min`}
+                        </small>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ));
+          })()
         )}
       </div>
     </div>

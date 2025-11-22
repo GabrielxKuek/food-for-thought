@@ -3,6 +3,7 @@ import { ActivitySession } from '../types';
 import AppleWatchService from '../services/AppleWatchService';
 import { useHealth } from '../context/HealthContext';
 import HeartRateGraph from './HeartRateGraph';
+import { Heart, Flame, Clock, Watch, RefreshCw, Bluetooth, Gamepad2, Radio, Zap, PersonStanding, Activity } from 'lucide-react';
 import './ActivityTracker.css';
 
 interface ActivityTrackerProps {
@@ -16,7 +17,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
     new AppleWatchService(process.env.REACT_APP_API_URL || 'http://localhost:8080', userId)
   );
   
-  // Use Health Context
   const {
     currentHeartRate,
     isWatchConnected: isConnected,
@@ -29,7 +29,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
   } = useHealth();
 
   const loadTodayActivities = React.useCallback(() => {
-    // Mock data - replace with actual API call
     const mockActivities: ActivitySession[] = [
       {
         userId,
@@ -53,7 +52,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
   const checkWatchConnection = React.useCallback(() => {
     setIsConnected(true);
     
-    // Start periodic heart rate simulation
     const interval = setInterval(async () => {
       if (connectionMethod === 'simulator') {
         const mockHeartRate = Math.floor(Math.random() * (85 - 65 + 1)) + 65;
@@ -62,19 +60,15 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [connectionMethod]);
+  }, [connectionMethod, setIsConnected, setCurrentHeartRate]);
 
   useEffect(() => {
-    // Check watch connection
     const cleanup = checkWatchConnection();
-    
-    // Load today's activities
     loadTodayActivities();
 
-    // Start periodic sync if backend mode
     let stopSync: (() => void) | undefined;
     if (connectionMethod === 'backend') {
-      stopSync = watchService.startPeriodicSync(30000); // Every 30 seconds
+      stopSync = watchService.startPeriodicSync(30000);
     }
     
     return () => {
@@ -88,17 +82,15 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
       setIsConnected(false);
       
       if (connectionMethod === 'bluetooth') {
-        // Try Bluetooth connection
         const connected = await watchService.connectViaBluetooth();
         if (connected) {
           setIsConnected(true);
           updateSyncTime();
-          alert('✅ Connected via Bluetooth!');
+          alert('Connected via Bluetooth');
         } else {
-          alert('❌ Bluetooth connection failed. Make sure your device supports Web Bluetooth.');
+          alert('Bluetooth connection failed. Make sure your device supports Web Bluetooth.');
         }
       } else if (connectionMethod === 'backend') {
-        // Sync from REAL backend API (iOS app data)
         try {
           const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/health/${userId}`);
           
@@ -109,7 +101,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
           const data = await response.json();
           setIsConnected(true);
           
-          // Store heart rate data in context
           if (data.heart_rates && data.heart_rates.length > 0) {
             addHeartRates(data.heart_rates.map((hr: any) => ({
               timestamp: hr.timestamp,
@@ -118,12 +109,10 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
             })));
           }
           
-          // Update current heart rate
           if (data.current_heart_rate) {
             setCurrentHeartRate(data.current_heart_rate.bpm);
           }
           
-          // Store activities in context
           if (data.activities && data.activities.length > 0) {
             addActivitiesToContext(data.activities);
             
@@ -137,24 +126,21 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
             setActivities(realActivities);
           }
           
-          // Store steps in context
           if (data.steps && data.steps.length > 0) {
             addSteps(data.steps);
           }
           
           updateSyncTime();
-          alert(`✅ Synced from backend!\n${data.summary.total_activities} activities, ${data.summary.total_calories_burned} calories burned, ${data.heart_rates?.length || 0} heart rate readings`);
+          alert(`Synced from backend: ${data.summary.total_activities} activities, ${data.summary.total_calories_burned} calories burned`);
         } catch (error) {
           console.error('Backend sync error:', error);
-          alert('❌ Backend sync failed. Make sure:\n1. Flask backend is running\n2. iOS app has synced data\n3. API URL is correct');
+          alert('Backend sync failed. Make sure the server is running.');
         }
       } else {
-        // Simulator mode
         const data = await watchService.simulateWatchConnection();
         setIsConnected(true);
         if (data.heartRate) {
           setCurrentHeartRate(data.heartRate);
-          // Add simulated heart rate data
           const now = new Date();
           const simulatedHeartRates = Array.from({ length: 20 }, (_, i) => ({
             timestamp: new Date(now.getTime() - (20 - i) * 60000).toISOString(),
@@ -163,7 +149,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
           }));
           addHeartRates(simulatedHeartRates);
         }
-        // Convert simulated data to activities
         if (data.activities) {
           const newActivities: ActivitySession[] = data.activities.map(activity => ({
             userId,
@@ -175,15 +160,14 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
           setActivities(prev => [...newActivities, ...prev]);
         }
         updateSyncTime();
-        alert('✅ Demo mode: Simulated Apple Watch data!');
+        alert('Demo mode: Simulated data loaded');
       }
     } catch (error) {
       console.error('Sync error:', error);
-      alert('❌ Sync failed. Check console for details.');
+      alert('Sync failed. Check console for details.');
     }
   };
 
-  // Helper function to map backend activity types to our activity levels
   const mapActivityType = (activityType: string): string => {
     const activityMap: { [key: string]: string } = {
       'running': 'vigorous',
@@ -203,38 +187,38 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
       if (connected) {
         setConnectionMethod('bluetooth');
         setIsConnected(true);
-        alert('✅ Bluetooth heart rate monitor connected!\n\nReal-time heart rate will now update automatically.');
+        alert('Bluetooth heart rate monitor connected');
       } else {
-        alert('❌ Failed to connect. Make sure:\n- Your device supports Web Bluetooth\n- Heart rate monitor is nearby\n- You granted permissions');
+        alert('Failed to connect. Make sure your device supports Web Bluetooth.');
       }
     } catch (error) {
-      alert('❌ Bluetooth not available on this device');
+      alert('Bluetooth not available on this device');
     }
   };
 
   const getActivityIcon = (level: string) => {
     switch (level) {
       case 'vigorous':
-        return '🏃‍♂️';
+        return <Zap size={18} />;
       case 'moderate':
-        return '🚶‍♂️';
+        return <PersonStanding size={18} />;
       case 'light':
-        return '🧘‍♂️';
+        return <Activity size={18} />;
       default:
-        return '😴';
+        return <Activity size={18} />;
     }
   };
 
   const getActivityColor = (level: string) => {
     switch (level) {
       case 'vigorous':
-        return '#ff6b6b';
+        return '#111827';
       case 'moderate':
-        return '#feca57';
+        return '#6b7280';
       case 'light':
-        return '#48dbfb';
+        return '#d1d5db';
       default:
-        return '#dfe6e9';
+        return '#e5e7eb';
     }
   };
 
@@ -245,20 +229,23 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
 
   return (
     <div className="activity-tracker">
-      <h2>💪 Activity Tracker</h2>
+      <h2>Activity Tracker</h2>
 
       <div className="watch-connection">
         <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
           <span className="status-dot"></span>
-          {isConnected ? '⌚ Apple Watch Connected' : '⌚ Apple Watch Disconnected'}
+          <Watch size={16} />
+          {isConnected ? 'Connected' : 'Disconnected'}
           <span className="connection-mode">({connectionMethod})</span>
         </div>
         <div className="connection-buttons">
           <button className="button" onClick={syncWithAppleWatch}>
-            🔄 Sync Now
+            <RefreshCw size={14} />
+            Sync
           </button>
           <button className="button secondary" onClick={connectBluetooth}>
-            🔗 Connect Bluetooth
+            <Bluetooth size={14} />
+            Bluetooth
           </button>
         </div>
       </div>
@@ -271,7 +258,8 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
             checked={connectionMethod === 'simulator'}
             onChange={(e) => setConnectionMethod(e.target.value as any)}
           />
-          🎮 Demo Mode (Simulated)
+          <Gamepad2 size={16} />
+          Demo Mode
         </label>
         <label>
           <input
@@ -280,7 +268,8 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
             checked={connectionMethod === 'bluetooth'}
             onChange={(e) => setConnectionMethod(e.target.value as any)}
           />
-          🔗 Bluetooth Heart Rate Monitor
+          <Bluetooth size={16} />
+          Bluetooth Monitor
         </label>
         <label>
           <input
@@ -289,14 +278,17 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
             checked={connectionMethod === 'backend'}
             onChange={(e) => setConnectionMethod(e.target.value as any)}
           />
-          📡 Backend API (Native iOS App)
+          <Radio size={16} />
+          Backend API
         </label>
       </div>
 
       {isConnected && currentHeartRate && (
         <div className="heart-rate-monitor">
           <div className="heart-rate-display">
-            <div className="heart-icon">❤️</div>
+            <div className="heart-icon">
+              <Heart size={32} fill="#ef4444" />
+            </div>
             <div className="heart-rate-value">
               <span className="bpm">{currentHeartRate}</span>
               <span className="bpm-label">BPM</span>
@@ -308,21 +300,24 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
         </div>
       )}
 
-      {/* Heart Rate Graph */}
       <HeartRateGraph timeRange="hour" />
 
       <div className="card">
         <h3>Today's Summary</h3>
         <div className="summary-stats">
           <div className="summary-item">
-            <div className="summary-icon">🔥</div>
+            <div className="summary-icon">
+              <Flame size={20} />
+            </div>
             <div className="summary-content">
               <div className="summary-label">Calories Burned</div>
               <div className="summary-value">{totalCaloriesBurned} kcal</div>
             </div>
           </div>
           <div className="summary-item">
-            <div className="summary-icon">⏱️</div>
+            <div className="summary-icon">
+              <Clock size={20} />
+            </div>
             <div className="summary-content">
               <div className="summary-label">Active Sessions</div>
               <div className="summary-value">{activities.length}</div>
@@ -334,7 +329,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
       <div className="activities-list">
         <h3>Activity Sessions</h3>
         {activities.length === 0 ? (
-          <p className="empty-state">No activities recorded yet today. Get moving!</p>
+          <p className="empty-state">No activities recorded yet today</p>
         ) : (
           activities.map((activity, index) => {
             const startTime = new Date(activity.start);
@@ -354,8 +349,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
                   <div className="activity-info">
                     <h4>{activity.activity_level.charAt(0).toUpperCase() + activity.activity_level.slice(1)} Activity</h4>
                     <span className="activity-time">
-                      {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
-                      {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>

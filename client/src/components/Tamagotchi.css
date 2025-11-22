@@ -4,111 +4,211 @@
   justify-content: center;
 }
 
-.tamagotchi {
-  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+.tamagotchi-wrapper {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 400px;
+}
+
+.tamagotchi-environment {
+  position: relative;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  background-color: #f3f4f6;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  min-width: 300px;
-  transition: all 0.3s ease;
-}
-
-.tamagotchi.celebrating {
-  animation: celebrate 0.5s ease-in-out;
-}
-
-@keyframes celebrate {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.1) rotate(-5deg); }
-  75% { transform: scale(1.1) rotate(5deg); }
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 20px;
 }
 
 .tamagotchi-character {
   position: relative;
-  width: 120px;
-  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+
+.tamagotchi-character.celebrating {
+  animation: bounce 0.5s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+.character-image {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
   animation: float 3s ease-in-out infinite;
+  transition: all 0.3s ease;
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-8px); }
 }
 
-.character-emoji {
-  font-size: 5rem;
-  text-align: center;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-  animation: pulse 2s ease-in-out infinite;
+.speech-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 8px;
+  animation: fadeIn 0.3s ease;
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #ffffff;
 }
 
-.character-body {
-  display: none; /* Using emoji instead, but keeping for future customization */
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: #e5e7eb;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.tamagotchi-controls {
+  padding: 16px;
+}
+
+.character-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.character-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.food-count {
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 .tamagotchi-stats {
-  width: 100%;
+  margin-bottom: 12px;
 }
 
 .stat-row {
-  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .stat-label {
-  display: block;
-  font-weight: bold;
-  color: #2d3436;
-  margin-bottom: 8px;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  width: 50px;
 }
 
 .health-bar {
-  background: white;
-  border-radius: 15px;
-  height: 30px;
+  flex: 1;
+  background: #e5e7eb;
+  border-radius: 4px;
+  height: 8px;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .health-fill {
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 0.9rem;
-  transition: all 0.5s ease;
-  border-radius: 15px;
+  border-radius: 4px;
+  transition: width 0.5s ease, background 0.5s ease;
+}
+
+.stat-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+  width: 36px;
+  text-align: right;
 }
 
 .motivation-text {
-  background: white;
-  padding: 15px;
-  border-radius: 15px;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 6px;
   text-align: center;
-  font-weight: bold;
-  color: #2d3436;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  margin-top: 10px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 12px;
 }
 
-@media (max-width: 768px) {
-  .tamagotchi {
-    min-width: 250px;
-    padding: 20px;
+.speech-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.toggle-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+  transition: background 0.15s ease;
+}
+
+.toggle-indicator.active {
+  background: #059669;
+}
+
+.toggle-hint {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+}
+
+@media (max-width: 640px) {
+  .tamagotchi-wrapper {
+    max-width: 100%;
   }
-  
-  .character-emoji {
-    font-size: 4rem;
+
+  .tamagotchi-environment {
+    height: 180px;
+  }
+
+  .character-image {
+    width: 64px;
+    height: 64px;
   }
 }

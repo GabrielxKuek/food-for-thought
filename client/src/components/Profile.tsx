@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
+import { User, Pencil, Check, X } from 'lucide-react';
 import './Profile.css';
 
 interface ProfileProps {
@@ -43,94 +44,92 @@ const Profile: React.FC<ProfileProps> = ({ userProfile, setUserProfile }) => {
   };
 
   const getBMICategory = (bmi: number) => {
-    if (bmi < 18.5) return { text: 'Underweight', color: '#48dbfb' };
-    if (bmi < 25) return { text: 'Normal', color: '#43e97b' };
-    if (bmi < 30) return { text: 'Overweight', color: '#feca57' };
-    return { text: 'Obese', color: '#ff6b6b' };
+    if (bmi < 18.5) return 'Underweight';
+    if (bmi < 25) return 'Normal';
+    if (bmi < 30) return 'Overweight';
+    return 'Obese';
   };
 
   const bmi = calculateBMI();
   const bmiCategory = getBMICategory(bmi);
 
+  const getGoalTypeLabel = (type: string) => {
+    switch (type) {
+      case 'weight_loss': return 'Weight Loss';
+      case 'weight_gain': return 'Weight Gain';
+      case 'maintenance': return 'Maintenance';
+      default: return type;
+    }
+  };
+
   return (
     <div className="profile">
-      <h2>👤 Profile</h2>
+      <h2>Profile</h2>
 
       {!isEditing ? (
         <>
           <div className="profile-card">
             <div className="profile-header">
               <div className="profile-avatar">
-                {userProfile?.profile.sex === 'male' ? '👨' : '👩'}
+                <User size={20} />
               </div>
               <div className="profile-info">
                 <h3>User Profile</h3>
-                <p>User ID: {userProfile?.userId}</p>
+                <p>{userProfile?.userId}</p>
               </div>
               <button className="button" onClick={() => setIsEditing(true)}>
-                ✏️ Edit Profile
+                <Pencil size={14} />
+                Edit
               </button>
             </div>
 
             <div className="profile-stats">
               <div className="stat-item">
-                <span className="stat-icon">🎂</span>
                 <span className="stat-label">Age</span>
-                <span className="stat-value">{userProfile?.profile.age} years</span>
+                <span className="stat-value">{userProfile?.profile.age} yrs</span>
               </div>
               <div className="stat-item">
-                <span className="stat-icon">📏</span>
                 <span className="stat-label">Height</span>
                 <span className="stat-value">{userProfile?.profile.height_cm} cm</span>
               </div>
               <div className="stat-item">
-                <span className="stat-icon">⚖️</span>
                 <span className="stat-label">Weight</span>
                 <span className="stat-value">{userProfile?.profile.initial_weight_kg} kg</span>
               </div>
               <div className="stat-item">
-                <span className="stat-icon">⚕️</span>
                 <span className="stat-label">BMI</span>
-                <span className="stat-value" style={{ color: bmiCategory.color }}>
-                  {bmi} ({bmiCategory.text})
-                </span>
+                <span className="stat-value">{bmi} ({bmiCategory})</span>
               </div>
             </div>
           </div>
 
           <div className="card">
-            <h3>🎯 Fitness Goal</h3>
+            <h3>Fitness Goal</h3>
             <div className="goal-info">
               <div className="goal-type">
-                <strong>Goal Type:</strong>{' '}
-                {userProfile?.goal.type === 'weight_loss' && '📉 Weight Loss'}
-                {userProfile?.goal.type === 'weight_gain' && '📈 Weight Gain'}
-                {userProfile?.goal.type === 'maintenance' && '⚖️ Maintenance'}
+                <strong>Goal:</strong> {getGoalTypeLabel(userProfile?.goal.type || '')}
               </div>
               <div className="goal-target">
                 <strong>Weekly Target:</strong>{' '}
                 {userProfile?.goal.weekly_target_kg === 0
                   ? 'Maintain current weight'
-                  : `${Math.abs(userProfile?.goal.weekly_target_kg || 0)} kg per week`}
+                  : `${Math.abs(userProfile?.goal.weekly_target_kg || 0)} kg/week`}
               </div>
             </div>
           </div>
 
           <div className="card">
-            <h3>🥗 Daily Macro Goals</h3>
+            <h3>Daily Macro Goals</h3>
             <div className="macro-goals">
               <div className="macro-goal-item">
-                <div className="macro-icon">🍞</div>
-                <div className="macro-name">Carbohydrates</div>
+                <div className="macro-name">Carbs</div>
                 <div className="macro-amount">{userProfile?.goal.macro_goals.carbs_g}g</div>
               </div>
               <div className="macro-goal-item">
-                <div className="macro-icon">🥩</div>
                 <div className="macro-name">Protein</div>
                 <div className="macro-amount">{userProfile?.goal.macro_goals.protein_g}g</div>
               </div>
               <div className="macro-goal-item">
-                <div className="macro-icon">🥑</div>
                 <div className="macro-name">Fat</div>
                 <div className="macro-amount">{userProfile?.goal.macro_goals.fat_g}g</div>
               </div>
@@ -281,10 +280,12 @@ const Profile: React.FC<ProfileProps> = ({ userProfile, setUserProfile }) => {
 
           <div className="form-actions">
             <button type="submit" className="button success">
-              ✅ Save Changes
+              <Check size={14} />
+              Save Changes
             </button>
             <button type="button" className="button secondary" onClick={() => setIsEditing(false)}>
-              ❌ Cancel
+              <X size={14} />
+              Cancel
             </button>
           </div>
         </form>

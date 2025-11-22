@@ -99,17 +99,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, userProfile }) => {
           <h3>Macro Goals (Daily)</h3>
           <div className="macro-grid">
             <div className="macro-item">
-              <div className="macro-icon">🍞</div>
               <div className="macro-label">Carbs</div>
               <div className="macro-value">{userProfile.goal.macro_goals.carbs_g}g</div>
             </div>
             <div className="macro-item">
-              <div className="macro-icon">🥩</div>
               <div className="macro-label">Protein</div>
               <div className="macro-value">{userProfile.goal.macro_goals.protein_g}g</div>
             </div>
             <div className="macro-item">
-              <div className="macro-icon">🥑</div>
               <div className="macro-label">Fat</div>
               <div className="macro-value">{userProfile.goal.macro_goals.fat_g}g</div>
             </div>

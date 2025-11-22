@@ -7,7 +7,7 @@ export interface UserProfile {
     initial_weight_kg: number;
   };
   goal: {
-    type: 'weight_loss' | 'weight_gain' | 'maintenance';
+    type: 'weight_loss' | 'weight_gain' | 'maintenance' | string;
     weekly_target_kg: number;
     macro_goals: {
       carbs_g: number;
@@ -39,7 +39,7 @@ export interface NutritionalInfo {
 export interface FoodLog {
   userId: string;
   timestamp: string;
-  source: 'manual' | 'cv';
+  source: 'manual' | 'cv' | 'search';
   name: string;
   portion_g: number;
   confidence?: number;

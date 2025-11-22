@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ActivitySession } from '../types';
 import { useHealth } from '../context/HealthContext';
 import HeartRateGraph from './HeartRateGraph';
+import { Heart, Flame, Clock, Watch, RefreshCw, Bluetooth, Gamepad2, Radio, Zap, PersonStanding, Activity } from 'lucide-react';
 import './ActivityTracker.css';
 
 interface ActivityTrackerProps {
@@ -11,7 +12,6 @@ interface ActivityTrackerProps {
 const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
   const [activities, setActivities] = useState<ActivitySession[]>([]);
   
-  // Use Health Context
   const {
     currentHeartRate,
     isWatchConnected: isConnected,
@@ -151,7 +151,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
     }
   };
 
-  // Helper function to map backend activity types to our activity levels
   const mapActivityType = (activityType: string): string => {
     const activityMap: { [key: string]: string } = {
       'RUNNING': 'vigorous',
@@ -174,26 +173,26 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
   const getActivityIcon = (level: string) => {
     switch (level) {
       case 'vigorous':
-        return '🏃‍♂️';
+        return <Zap size={18} />;
       case 'moderate':
-        return '🚶‍♂️';
+        return <PersonStanding size={18} />;
       case 'light':
-        return '🧘‍♂️';
+        return <Activity size={18} />;
       default:
-        return '😴';
+        return <Activity size={18} />;
     }
   };
 
   const getActivityColor = (level: string) => {
     switch (level) {
       case 'vigorous':
-        return '#ff6b6b';
+        return '#111827';
       case 'moderate':
-        return '#feca57';
+        return '#6b7280';
       case 'light':
-        return '#48dbfb';
+        return '#d1d5db';
       default:
-        return '#dfe6e9';
+        return '#e5e7eb';
     }
   };
 
@@ -204,7 +203,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
 
   return (
     <div className="activity-tracker">
-      <h2>💪 Activity Tracker</h2>
+      <h2>Activity Tracker</h2>
 
       <div className="watch-connection">
         <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
@@ -213,7 +212,8 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
         </div>
         <div className="connection-buttons">
           <button className="button" onClick={syncWithAppleWatch}>
-            🔄 Sync Now
+            <RefreshCw size={14} />
+            Sync
           </button>
         </div>
       </div>
@@ -221,7 +221,9 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
       {isConnected && currentHeartRate && (
         <div className="heart-rate-monitor">
           <div className="heart-rate-display">
-            <div className="heart-icon">❤️</div>
+            <div className="heart-icon">
+              <Heart size={32} fill="#ef4444" />
+            </div>
             <div className="heart-rate-value">
               <span className="bpm">{currentHeartRate}</span>
               <span className="bpm-label">BPM</span>
@@ -233,21 +235,24 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId }) => {
         </div>
       )}
 
-      {/* Heart Rate Graph */}
       <HeartRateGraph timeRange="hour" />
 
       <div className="card">
         <h3>Today's Summary</h3>
         <div className="summary-stats">
           <div className="summary-item">
-            <div className="summary-icon">🔥</div>
+            <div className="summary-icon">
+              <Flame size={20} />
+            </div>
             <div className="summary-content">
               <div className="summary-label">Calories Burned</div>
               <div className="summary-value">{totalCaloriesBurned} kcal</div>
             </div>
           </div>
           <div className="summary-item">
-            <div className="summary-icon">⏱️</div>
+            <div className="summary-icon">
+              <Clock size={20} />
+            </div>
             <div className="summary-content">
               <div className="summary-label">Active Sessions</div>
               <div className="summary-value">{activities.length}</div>

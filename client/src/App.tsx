@@ -4,17 +4,19 @@ import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
 import FoodLogger from './components/FoodLogger';
 import ActivityTracker from './components/ActivityTracker';
+import Planner from './components/Planner';
 import Tamagotchi from './components/Tamagotchi';
+import Chatbot from './components/Chatbot';
 import { UserProfile } from './types';
 import { HealthProvider } from './context/HealthContext';
+import { LayoutDashboard, User, Utensils, Activity, ClipboardList } from 'lucide-react';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'profile' | 'food' | 'activity'>('dashboard');
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'profile' | 'food' | 'activity' | 'planner'>('dashboard');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [userId] = useState<string>('user_001'); // Default user for demo
+  const [userId] = useState<string>('user_001');
 
   useEffect(() => {
-    // Initialize with demo data if no profile exists
     if (!userProfile) {
       setUserProfile({
         userId: userId,
@@ -47,6 +49,8 @@ function App() {
         return <FoodLogger userId={userId} />;
       case 'activity':
         return <ActivityTracker userId={userId} />;
+      case 'planner':
+        return <Planner userProfile={userProfile} setUserProfile={setUserProfile} />;
       default:
         return <Dashboard userId={userId} userProfile={userProfile} />;
     }
@@ -58,8 +62,8 @@ function App() {
         <div className="container">
           <div className="page">
             <div className="header">
-              <h1>🍎 Food for Thought</h1>
-              <p>Your AI-Powered Fitness Companion</p>
+              <h1>Food for Thought</h1>
+              <p>Track your nutrition and fitness</p>
             </div>
 
             <nav className="nav">
@@ -67,35 +71,47 @@ function App() {
                 className={`nav-button ${currentPage === 'dashboard' ? 'active' : ''}`}
                 onClick={() => setCurrentPage('dashboard')}
               >
-                📊 Dashboard
+                <LayoutDashboard size={16} />
+                Dashboard
               </button>
               <button
                 className={`nav-button ${currentPage === 'profile' ? 'active' : ''}`}
                 onClick={() => setCurrentPage('profile')}
               >
-                👤 Profile
+                <User size={16} />
+                Profile
               </button>
               <button
                 className={`nav-button ${currentPage === 'food' ? 'active' : ''}`}
                 onClick={() => setCurrentPage('food')}
               >
-                🍽️ Food Log
+                <Utensils size={16} />
+                Food Log
               </button>
               <button
                 className={`nav-button ${currentPage === 'activity' ? 'active' : ''}`}
                 onClick={() => setCurrentPage('activity')}
               >
-                💪 Activity
+                <Activity size={16} />
+                Activity
+              </button>
+              <button
+                className={`nav-button ${currentPage === 'planner' ? 'active' : ''}`}
+                onClick={() => setCurrentPage('planner')}
+              >
+                <ClipboardList size={16} />
+                Planner
               </button>
             </nav>
 
-            {/* Tamagotchi - Always visible */}
             <Tamagotchi userId={userId} />
 
-            {/* Main content */}
             {renderPage()}
           </div>
         </div>
+
+        {/* Global Chatbot */}
+        <Chatbot userProfile={userProfile} />
       </div>
     </HealthProvider>
   );

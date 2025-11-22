@@ -29,6 +29,7 @@ interface HealthContextType {
   currentHeartRate: number | null;
   isWatchConnected: boolean;
   lastSyncTime: string | null;
+  foodLogCount: number;
   addHeartRates: (rates: HeartRateDataPoint[]) => void;
   addActivities: (activities: ActivityDataPoint[]) => void;
   addSteps: (steps: StepsDataPoint[]) => void;
@@ -36,6 +37,9 @@ interface HealthContextType {
   setWatchConnected: (connected: boolean) => void;
   updateSyncTime: () => void;
   clearAllData: () => void;
+  incrementFoodLog: () => void;
+  decrementFoodLog: () => void;
+  resetFoodLog: () => void;
 }
 
 const HealthContext = createContext<HealthContextType | undefined>(undefined);
@@ -59,17 +63,17 @@ export const HealthProvider: React.FC<HealthProviderProps> = ({ children }) => {
   const [currentHeartRate, setCurrentHeartRate] = useState<number | null>(null);
   const [isWatchConnected, setWatchConnected] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [foodLogCount, setFoodLogCount] = useState(0);
 
   const addHeartRates = (rates: HeartRateDataPoint[]) => {
     setHeartRates(prev => {
-      // Combine and sort by timestamp (newest first)
       const combined = [...prev, ...rates];
       const unique = combined.filter((rate, index, self) =>
         index === self.findIndex(r => r.timestamp === rate.timestamp)
       );
       return unique.sort((a, b) => 
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      ).slice(0, 1000); // Keep only last 1000 entries
+      ).slice(0, 1000);
     });
   };
 
@@ -107,6 +111,19 @@ export const HealthProvider: React.FC<HealthProviderProps> = ({ children }) => {
     setSteps([]);
     setCurrentHeartRate(null);
     setLastSyncTime(null);
+    setFoodLogCount(0);
+  };
+
+  const incrementFoodLog = () => {
+    setFoodLogCount(prev => prev + 1);
+  };
+
+  const decrementFoodLog = () => {
+    setFoodLogCount(prev => Math.max(0, prev - 1));
+  };
+
+  const resetFoodLog = () => {
+    setFoodLogCount(0);
   };
 
   return (
@@ -118,6 +135,7 @@ export const HealthProvider: React.FC<HealthProviderProps> = ({ children }) => {
         currentHeartRate,
         isWatchConnected,
         lastSyncTime,
+        foodLogCount,
         addHeartRates,
         addActivities,
         addSteps,
@@ -125,6 +143,9 @@ export const HealthProvider: React.FC<HealthProviderProps> = ({ children }) => {
         setWatchConnected,
         updateSyncTime,
         clearAllData,
+        incrementFoodLog,
+        decrementFoodLog,
+        resetFoodLog,
       }}
     >
       {children}

@@ -48,7 +48,7 @@ function App() {
       case 'food':
         return <FoodLogger userId={userId} />;
       case 'activity':
-        return <ActivityTracker userId={userId} />;
+        return <ActivityTracker />;
       case 'planner':
         return <Planner userProfile={userProfile} setUserProfile={setUserProfile} />;
       default:

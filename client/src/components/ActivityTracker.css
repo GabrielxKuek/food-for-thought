@@ -54,7 +54,9 @@
 
 .connection-buttons {
   display: flex;
+  flex-direction: column;
   gap: 8px;
+  align-items: flex-end;
 }
 
 .connection-options {
@@ -162,7 +164,7 @@
 
 .summary-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
 }
 
@@ -232,10 +234,25 @@
   padding: 16px;
   margin-bottom: 8px;
   border-left: 3px solid #e5e7eb;
+  transition: all 0.2s ease-in-out;
 }
 
-.activity-item:last-child {
-  margin-bottom: 0;
+.activity-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.activity-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.activity-meta {
+  color: #6b7280;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  font-weight: 400;
 }
 
 .activity-header {
@@ -329,6 +346,68 @@
   border-color: #9ca3af;
 }
 
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.last-sync {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: block;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button:disabled:hover {
+  background: inherit;
+  transform: none;
+}
+
+.day-group {
+  margin-bottom: 24px;
+}
+
+.day-header {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-stats {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.day-group .activity-item {
+  margin-bottom: 12px;
+  margin-left: 16px;
+}
+
+.day-group .activity-item:last-child {
+  margin-bottom: 0;
+}
+
 @media (max-width: 640px) {
   .activity-tracker {
     padding: 16px;
@@ -354,5 +433,14 @@
   .activity-stats {
     flex-wrap: wrap;
     gap: 16px;
+  }
+
+  .activity-details {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .activity-meta {
+    font-size: 0.6875rem;
   }
 }

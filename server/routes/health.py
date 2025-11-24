@@ -282,7 +282,7 @@ def get_watch_status(user_id: str):
         return jsonify({"error": str(e)}), 500
 
 
-@health_bp.route('/test', methods=['GET'])
+@health_bp.route('/health', methods=['GET'])
 def test_health_endpoint():
     """Test endpoint to verify health routes are working"""
     return jsonify({

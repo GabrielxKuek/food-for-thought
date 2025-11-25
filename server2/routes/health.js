@@ -1,16 +1,35 @@
 const express = require('express');
 const router = express.Router();
 
-// Helper functions for Redis operations
+// Helper functions for Redis operations with error handling
 const getRedisClient = (req) => req.app.locals.redis;
 
 const getFromRedis = async (redis, key) => {
-  const data = await redis.get(key);
-  return data ? JSON.parse(data) : [];
+  try {
+    if (!redis || !redis.isOpen) {
+      console.log(`⚠️  Redis not available for key: ${key}, returning empty array`);
+      return [];
+    }
+    const data = await redis.get(key);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error(`❌ Redis GET error for key ${key}:`, error.message);
+    return []; // Return empty array on error
+  }
 };
 
 const setToRedis = async (redis, key, data) => {
-  await redis.set(key, JSON.stringify(data));
+  try {
+    if (!redis || !redis.isOpen) {
+      console.log(`⚠️  Redis not available for key: ${key}, skipping set operation`);
+      return false;
+    }
+    await redis.set(key, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error(`❌ Redis SET error for key ${key}:`, error.message);
+    return false;
+  }
 };
 
 // POST /api/health/sync - Sync health data from iOS app

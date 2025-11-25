@@ -11,37 +11,75 @@ const healthRoutes = require('./routes/health');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Redis client
+// Redis client with improved connection handling
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
   socket: {
     tls: process.env.REDIS_URL?.startsWith('rediss://'),
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    connectTimeout: 60000, // 60 seconds
+    commandTimeout: 10000   // 10 seconds per command
+  },
+  retry_strategy: (options) => {
+    if (options.error && options.error.code === 'ECONNREFUSED') {
+      // End reconnecting on a specific error and flush all commands with a individual error
+      return new Error('The Redis server is unavailable');
+    }
+    if (options.total_retry_time > 1000 * 60 * 60) {
+      // End reconnecting after a specific timeout and flush all commands with a individual error
+      return new Error('Retry time exhausted');
+    }
+    if (options.attempt > 10) {
+      // End reconnecting with built in error
+      return undefined;
+    }
+    // reconnect after
+    return Math.min(options.attempt * 100, 3000);
   }
 });
 
-redisClient.on('error', (err) => console.error('❌ Redis Client Error', err));
+redisClient.on('error', (err) => {
+  console.error('❌ Redis Client Error:', err.message);
+  // Don't let Redis errors crash the server
+});
 redisClient.on('connect', () => console.log('✅ Connected to Redis'));
+redisClient.on('ready', () => console.log('✅ Redis is ready'));
+redisClient.on('reconnecting', () => console.log('🔄 Reconnecting to Redis...'));
 
-// Connect to Redis (with error handling for serverless)
+// Connect to Redis (with improved error handling)
 async function connectRedis() {
   try {
     if (!redisClient.isOpen) {
+      console.log('🔌 Attempting to connect to Redis...');
       await redisClient.connect();
+      console.log('✅ Successfully connected to Redis');
     }
   } catch (error) {
     console.error('❌ Failed to connect to Redis:', error.message);
+    console.log('⚠️  Server will continue running without Redis (using local fallback)');
+    // Don't exit process, let the server continue
   }
 }
 
+// Graceful Redis connection with retry
 connectRedis();
+
+// Reconnect on disconnect
+redisClient.on('end', () => {
+  console.log('🔌 Redis connection ended, attempting to reconnect...');
+  setTimeout(connectRedis, 5000); // Retry after 5 seconds
+});
 
 // Make Redis client available to routes
 app.locals.redis = redisClient;
 
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000', 
+    'https://food-for-thought-lovat.vercel.app',
+    process.env.CORS_ORIGIN
+  ].filter(Boolean), // Remove any undefined values
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));

@@ -4,7 +4,7 @@ import { Camera, PenLine, Search, Plus, ChevronLeft, ChevronRight, Loader2, Cpu,
 import './FoodLogger.css';
 import { useHealth } from '../context/HealthContext';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lemon-mice-swim.loca.lt';
 
 interface SearchResult {
   fdc_id: number;

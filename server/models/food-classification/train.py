@@ -8,6 +8,9 @@ from PIL import Image
 import os
 import io
 import pickle
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import numpy as np
 
 # ----------------------------
 # Custom Dataset from Hugging Face
@@ -110,9 +113,6 @@ val_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
-# ----------------------------
-# Load or Cache Dataset
-# ----------------------------
 # ----------------------------
 # Load or Cache Dataset
 # ----------------------------
@@ -349,6 +349,36 @@ optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=3, verbose=True)
 
 # ----------------------------
+# Plotting Functions
+# ----------------------------
+def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion Matrix'):
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    
+    plt.figure(figsize=(10, 8))
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title(title)
+    plt.colorbar()
+
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45, ha='right')
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(j, i, format(cm[i, j], fmt),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.tight_layout()
+    plt.show()
+
+# ----------------------------
 # Training Functions
 # ----------------------------
 def train_epoch(model, loader, criterion, optimizer, device):
@@ -414,6 +444,23 @@ def evaluate(model, loader, device, dataset):
     
     return accuracy
 
+def compute_confusion_matrix(model, loader, dataset, device):
+    model.eval()
+    all_preds = []
+    all_labels = []
+    
+    with torch.no_grad():
+        for images, labels in loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs, 1)
+            
+            all_preds.extend(predicted.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+    
+    cm = confusion_matrix(all_labels, all_preds)
+    return cm
+
 # ----------------------------
 # Main Training Loop
 # ----------------------------
@@ -459,6 +506,12 @@ def train_model():
     print(f"\n{'='*60}")
     print(f"Training Complete!")
     print(f"Best Test Accuracy: {best_acc:.2f}%")
+    print("\nGenerating confusion matrix...")
+
+    cm = compute_confusion_matrix(model, test_loader, train_dataset, device)
+    plot_confusion_matrix(cm, train_dataset.classes, normalize=False, title="Confusion Matrix")
+    plot_confusion_matrix(cm, train_dataset.classes, normalize=True, title="Normalized Confusion Matrix")
+
     print(f"{'='*60}")
     
     # Save class names

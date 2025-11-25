@@ -14,7 +14,7 @@ import { LayoutDashboard, User, Utensils, Activity, ClipboardList } from 'lucide
 function App() {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'profile' | 'food' | 'activity' | 'planner'>('dashboard');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [userId] = useState<string>('user_001');
+  const [userId] = useState<string>('user123');
 
   useEffect(() => {
     if (!userProfile) {
@@ -48,7 +48,7 @@ function App() {
       case 'food':
         return <FoodLogger userId={userId} />;
       case 'activity':
-        return <ActivityTracker />;
+        return <ActivityTracker userId={userId} />;
       case 'planner':
         return <Planner userProfile={userProfile} setUserProfile={setUserProfile} />;
       default:

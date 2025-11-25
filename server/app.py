@@ -7,11 +7,21 @@ from torchvision import models, transforms
 import io
 import logging
 import os
+from huggingface_hub import hf_hub_download
 
 # ----------------------------
 # Configuration
 # ----------------------------
-MODEL_PATH = "./models/food-classification/models/food_classifier_best.pth"  # <-- Change this to your model path
+# MODEL_PATH = "./models/food-classification/models/food_classifier_best.pth"
+
+MODEL_PATH = hf_hub_download(
+    repo_id="GabrielxKuek/food-for-thought",
+    filename="food_classifier_best.pth",
+    local_dir="/tmp"
+)
+
+print("model downloaded here bro: " + MODEL_PATH)
+print("MODEL EXISTS:", os.path.isfile(MODEL_PATH))
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

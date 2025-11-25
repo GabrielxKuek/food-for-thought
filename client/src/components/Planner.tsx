@@ -4,7 +4,7 @@ import { useHealth } from '../context/HealthContext';
 import { Scale, Plus, Trash2, Target, Pencil, AlertTriangle } from 'lucide-react';
 import './Planner.css';
 
-const CONSTANT_VARIABLE = 'AIzaSyBX6UcZK-GB-_zIuYFfyO-DfeLjyxVL1Jc';
+const CONSTANT_VARIABLE = process.env.REACT_APP_GEMINI_KEY;
 
 interface WeightEntry {
   date: string;

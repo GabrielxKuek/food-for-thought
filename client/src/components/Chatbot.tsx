@@ -3,7 +3,7 @@ import { UserProfile } from '../types';
 import { MessageCircle, Send, X } from 'lucide-react';
 import './Chatbot.css';
 
-const CONSTANT_VARIABLE = 'AIzaSyBX6UcZK-GB-_zIuYFfyO-DfeLjyxVL1Jc';
+const CONSTANT_VARIABLE = process.env.REACT_APP_GEMINI_KEY;
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -44,7 +44,7 @@ Profile:
 - Goal: ${userProfile?.goal.type?.replace('_', ' ') || 'maintenance'}
 - Weekly Target: ${userProfile?.goal.weekly_target_kg || 0} kg/week
 
-Give concise, actionable advice. Keep responses under 3 sentences unless more detail is specifically asked for. Focus on practical tips they can implement immediately.`;
+Give concise, actionable advice. Keep responses under 3 sentences unless more detail is specifically asked for. Focus on practical tips they can implement immediately. in your responses, fitness advice (eg workout routines) and nutritional advice arent limited to 3 sentences.`;
 
     try {
       const contents = [

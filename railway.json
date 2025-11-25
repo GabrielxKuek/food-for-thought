@@ -1,9 +1,0 @@
-{
-  "build": {
-    "builder": "NIXPACKS",
-    "nixpacksConfigPath": "server/nixpacks.toml"
-  },
-  "deploy": {
-    "start": "python server/app.py"
-  }
-}

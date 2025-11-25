@@ -13,31 +13,41 @@ import { LayoutDashboard, User, Utensils, Activity, ClipboardList } from 'lucide
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'profile' | 'food' | 'activity' | 'planner'>('dashboard');
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userId] = useState<string>('user123');
-
-  useEffect(() => {
-    if (!userProfile) {
-      setUserProfile({
-        userId: userId,
-        profile: {
-          age: 25,
-          sex: 'male',
-          height_cm: 175,
-          initial_weight_kg: 70
-        },
-        goal: {
-          type: 'maintenance',
-          weekly_target_kg: 0,
-          macro_goals: {
-            carbs_g: 250,
-            protein_g: 150,
-            fat_g: 70
-          }
-        }
-      });
+  
+  // Load user profile from localStorage or use default
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+    const saved = localStorage.getItem('userProfile');
+    if (saved) {
+      return JSON.parse(saved);
     }
-  }, [userId, userProfile]);
+    // Default profile
+    return {
+      userId: 'user123',
+      profile: {
+        age: 25,
+        sex: 'male',
+        height_cm: 175,
+        initial_weight_kg: 70
+      },
+      goal: {
+        type: 'maintenance',
+        weekly_target_kg: 0,
+        macro_goals: {
+          carbs_g: 250,
+          protein_g: 150,
+          fat_g: 70
+        }
+      }
+    };
+  });
+
+  // Save user profile to localStorage whenever it changes
+  useEffect(() => {
+    if (userProfile) {
+      localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    }
+  }, [userProfile]);
 
   const renderPage = () => {
     switch (currentPage) {

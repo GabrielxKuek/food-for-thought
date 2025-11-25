@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { useHealth } from '../context/HealthContext';
+import { calculateBMR, calculateTDEE, calculateCalorieTarget, calculateMacroTargets } from '../utils/calorieCalculations';
 import { Scale, Plus, Trash2, Target, Pencil, AlertTriangle } from 'lucide-react';
 import './Planner.css';
 
 const CONSTANT_VARIABLE = process.env.REACT_APP_GEMINI_KEY;
-
-interface WeightEntry {
-  date: string;
-  weight: number;
-}
 
 interface PlannerProps {
   userProfile: UserProfile | null;
@@ -17,7 +13,7 @@ interface PlannerProps {
 }
 
 const Planner: React.FC<PlannerProps> = ({ userProfile, setUserProfile }) => {
-  const { activities, foodLogCount } = useHealth();
+  const { activities, foodLogCount, weightEntries, addWeightEntry, removeWeightEntry, dailySummary } = useHealth();
   
   // Goal configuration
   const [goalConfig, setGoalConfig] = useState({
@@ -27,54 +23,9 @@ const Planner: React.FC<PlannerProps> = ({ userProfile, setUserProfile }) => {
   });
   const [goalWarning, setGoalWarning] = useState<string | null>(null);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
-
-  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([
-    { date: '2025-10-28', weight: 70.5 },
-    { date: '2025-11-04', weight: 70.2 },
-    { date: '2025-11-11', weight: 69.8 },
-    { date: '2025-11-18', weight: 69.5 },
-  ]);
   
   const [newWeight, setNewWeight] = useState<string>('');
   const [newDate, setNewDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  
-  // Dummy data for today's progress
-  const [todayProgress, setTodayProgress] = useState({
-    caloriesConsumed: 1450,
-    caloriesBurned: 320,
-    protein_g: 65,
-    carbs_g: 180,
-    fat_g: 45
-  });
-
-  // Calculate targets
-  const calculateBMR = (): number => {
-    if (!userProfile) return 0;
-    const { age, sex, height_cm, initial_weight_kg } = userProfile.profile;
-    if (sex === 'male') {
-      return 10 * initial_weight_kg + 6.25 * height_cm - 5 * age + 5;
-    }
-    return 10 * initial_weight_kg + 6.25 * height_cm - 5 * age - 161;
-  };
-
-  const calculateTDEE = (): number => calculateBMR() * 1.375;
-
-  const calculateCalorieTarget = (): number => {
-    const tdee = calculateTDEE();
-    const adjustment = (userProfile?.goal.weekly_target_kg || 0) * 7700 / 7;
-    if (userProfile?.goal.type === 'weight_loss') return tdee - Math.abs(adjustment);
-    if (userProfile?.goal.type === 'weight_gain') return tdee + Math.abs(adjustment);
-    return tdee;
-  };
-
-  const getMacroTargets = () => {
-    const calorieTarget = calculateCalorieTarget();
-    const weight = userProfile?.profile.initial_weight_kg || 70;
-    const protein_g = Math.round(weight * 1.8);
-    const fat_g = Math.round((calorieTarget * 0.25) / 9);
-    const carbs_g = Math.round((calorieTarget - protein_g * 4 - fat_g * 9) / 4);
-    return { protein_g, carbs_g, fat_g };
-  };
 
   // Weight progress
   const getWeightProgress = () => {
@@ -88,14 +39,26 @@ const Planner: React.FC<PlannerProps> = ({ userProfile, setUserProfile }) => {
 
   // Daily progress analysis
   const getDailyProgress = () => {
-    const calorieTarget = calculateCalorieTarget();
-    const macroTargets = getMacroTargets();
-    const netCalories = todayProgress.caloriesConsumed - todayProgress.caloriesBurned;
+    if (!userProfile) {
+      return {
+        calorieTarget: 2200,
+        netCalories: 0,
+        caloriePercent: 0,
+        proteinPercent: 0,
+        carbsPercent: 0,
+        fatPercent: 0,
+        macroTargets: { protein_g: 150, carbs_g: 250, fat_g: 70 }
+      };
+    }
+
+    const calorieTarget = calculateCalorieTarget(userProfile);
+    const macroTargets = calculateMacroTargets(userProfile);
+    const netCalories = dailySummary.calories_consumed - dailySummary.calories_burned;
     
-    const caloriePercent = Math.round((todayProgress.caloriesConsumed / calorieTarget) * 100);
-    const proteinPercent = Math.round((todayProgress.protein_g / macroTargets.protein_g) * 100);
-    const carbsPercent = Math.round((todayProgress.carbs_g / macroTargets.carbs_g) * 100);
-    const fatPercent = Math.round((todayProgress.fat_g / macroTargets.fat_g) * 100);
+    const caloriePercent = Math.round((dailySummary.calories_consumed / calorieTarget) * 100);
+    const proteinPercent = Math.round((dailySummary.protein_g / macroTargets.protein_g) * 100);
+    const carbsPercent = Math.round((dailySummary.carbs_g / macroTargets.carbs_g) * 100);
+    const fatPercent = Math.round((dailySummary.fat_g / macroTargets.fat_g) * 100);
 
     return {
       calorieTarget,
@@ -251,17 +214,14 @@ If realistic, say "This goal is achievable." If concerning, briefly explain why 
     return weeks;
   };
 
-  const addWeightEntry = () => {
+  const handleAddWeightEntry = () => {
     if (!newWeight || !newDate) return;
-    setWeightEntries(prev => 
-      [...prev, { date: newDate, weight: parseFloat(newWeight) }]
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    );
+    addWeightEntry({ date: newDate, weight: parseFloat(newWeight) });
     setNewWeight('');
   };
 
-  const removeWeightEntry = (date: string) => {
-    setWeightEntries(prev => prev.filter(e => e.date !== date));
+  const handleRemoveWeightEntry = (date: string) => {
+    removeWeightEntry(date);
   };
 
   // Line chart
@@ -403,7 +363,9 @@ If realistic, say "This goal is achievable." If concerning, briefly explain why 
         <div className="quick-stats">
           <div className="stat">
             <span className="stat-label">Daily Target</span>
-            <span className="stat-value">{Math.round(calculateCalorieTarget())} kcal</span>
+            <span className="stat-value">
+              {userProfile ? Math.round(calculateCalorieTarget(userProfile)) : 2200} kcal
+            </span>
           </div>
           <div className="stat">
             <span className="stat-label">Progress</span>
@@ -427,7 +389,7 @@ If realistic, say "This goal is achievable." If concerning, briefly explain why 
           <div className="progress-item">
             <div className="progress-header">
               <span>Calories</span>
-              <span>{todayProgress.caloriesConsumed} / {Math.round(dailyProgress.calorieTarget)}</span>
+              <span>{dailySummary.calories_consumed} / {Math.round(dailyProgress.calorieTarget)}</span>
             </div>
             <div className="progress-bar">
               <div className="progress-fill calories" style={{ width: `${Math.min(100, dailyProgress.caloriePercent)}%` }} />
@@ -436,7 +398,7 @@ If realistic, say "This goal is achievable." If concerning, briefly explain why 
           <div className="progress-item">
             <div className="progress-header">
               <span>Protein</span>
-              <span>{todayProgress.protein_g}g / {dailyProgress.macroTargets.protein_g}g</span>
+              <span>{dailySummary.protein_g}g / {dailyProgress.macroTargets.protein_g}g</span>
             </div>
             <div className="progress-bar">
               <div className="progress-fill protein" style={{ width: `${Math.min(100, dailyProgress.proteinPercent)}%` }} />
@@ -445,7 +407,7 @@ If realistic, say "This goal is achievable." If concerning, briefly explain why 
           <div className="progress-item">
             <div className="progress-header">
               <span>Carbs</span>
-              <span>{todayProgress.carbs_g}g / {dailyProgress.macroTargets.carbs_g}g</span>
+              <span>{dailySummary.carbs_g}g / {dailyProgress.macroTargets.carbs_g}g</span>
             </div>
             <div className="progress-bar">
               <div className="progress-fill carbs" style={{ width: `${Math.min(100, dailyProgress.carbsPercent)}%` }} />
@@ -454,7 +416,7 @@ If realistic, say "This goal is achievable." If concerning, briefly explain why 
           <div className="progress-item">
             <div className="progress-header">
               <span>Fat</span>
-              <span>{todayProgress.fat_g}g / {dailyProgress.macroTargets.fat_g}g</span>
+              <span>{dailySummary.fat_g}g / {dailyProgress.macroTargets.fat_g}g</span>
             </div>
             <div className="progress-bar">
               <div className="progress-fill fat" style={{ width: `${Math.min(100, dailyProgress.fatPercent)}%` }} />
@@ -487,7 +449,7 @@ If realistic, say "This goal is achievable." If concerning, briefly explain why 
             value={newWeight}
             onChange={(e) => setNewWeight(e.target.value)}
           />
-          <button className="btn" onClick={addWeightEntry}>
+          <button className="btn" onClick={handleAddWeightEntry}>
             <Plus size={14} />
           </button>
         </div>
@@ -500,7 +462,7 @@ If realistic, say "This goal is achievable." If concerning, briefly explain why 
               <div key={entry.date} className="entry">
                 <span>{new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 <span className="entry-weight">{entry.weight} kg</span>
-                <button className="btn-icon" onClick={() => removeWeightEntry(entry.date)}>
+                <button className="btn-icon" onClick={() => handleRemoveWeightEntry(entry.date)}>
                   <Trash2 size={14} />
                 </button>
               </div>

@@ -635,4 +635,5 @@ if __name__ == "__main__":
     print("  GET  /search-food?q=chicken%20rice&page=1&page_size=10 - Search food database")
     print("="*60)
     
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)

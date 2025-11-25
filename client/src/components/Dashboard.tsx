@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { UserProfile, DailyEnergySummary, WeightLog } from '../types';
+import React from 'react';
+import { UserProfile } from '../types';
+import { useHealth } from '../context/HealthContext';
+import { calculateTDEE, calculateCalorieTarget } from '../utils/calorieCalculations';
 import './Dashboard.css';
 
 interface DashboardProps {
@@ -8,50 +10,24 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userId, userProfile }) => {
-  const [dailySummary, setDailySummary] = useState<DailyEnergySummary | null>(null);
-  const [recentWeights, setRecentWeights] = useState<WeightLog[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { dailySummary, weightEntries } = useHealth();
 
-  const loadDashboardData = React.useCallback(async () => {
-    try {
-      setLoading(true);
-      // Mock data for demo - replace with actual API calls
-      setDailySummary({
-        userId,
-        date: new Date().toISOString().split('T')[0],
-        calories_consumed: 1850,
-        calories_burned: 450,
-        tdee_estimate: 2200
-      });
+  // Calculate TDEE and target from user profile
+  const tdee = userProfile ? Math.round(calculateTDEE(userProfile.profile)) : 2200;
+  const calorieTarget = userProfile ? Math.round(calculateCalorieTarget(userProfile)) : 2200;
 
-      setRecentWeights([
-        { userId, date: '2025-11-20', weight_kg: 69.5 },
-        { userId, date: '2025-11-18', weight_kg: 70.0 },
-        { userId, date: '2025-11-15', weight_kg: 70.2 }
-      ]);
+  const calorieBalance = dailySummary.calories_consumed - calorieTarget + dailySummary.calories_burned;
+  const calorieProgress = (dailySummary.calories_consumed / calorieTarget) * 100;
 
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-      setLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
-
-  if (loading) {
-    return <div className="loading">Loading dashboard...</div>;
-  }
-
-  const calorieBalance = dailySummary 
-    ? dailySummary.calories_consumed - dailySummary.tdee_estimate + dailySummary.calories_burned
-    : 0;
-
-  const calorieProgress = dailySummary
-    ? (dailySummary.calories_consumed / dailySummary.tdee_estimate) * 100
-    : 0;
+  // Get recent weights (last 3)
+  const recentWeights = [...weightEntries]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3)
+    .map(entry => ({
+      userId,
+      date: entry.date,
+      weight_kg: entry.weight
+    }));
 
   return (
     <div className="dashboard">
@@ -60,19 +36,19 @@ const Dashboard: React.FC<DashboardProps> = ({ userId, userProfile }) => {
       <div className="grid">
         <div className="stat-box">
           <h4>Calories Consumed</h4>
-          <div className="value">{dailySummary?.calories_consumed || 0}</div>
+          <div className="value">{dailySummary.calories_consumed}</div>
           <small>kcal</small>
         </div>
 
         <div className="stat-box">
           <h4>Calories Burned</h4>
-          <div className="value">{dailySummary?.calories_burned || 0}</div>
+          <div className="value">{dailySummary.calories_burned}</div>
           <small>kcal</small>
         </div>
 
         <div className="stat-box">
           <h4>Daily Target</h4>
-          <div className="value">{dailySummary?.tdee_estimate || 0}</div>
+          <div className="value">{calorieTarget}</div>
           <small>kcal</small>
         </div>
 

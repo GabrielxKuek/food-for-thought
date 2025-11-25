@@ -3,7 +3,7 @@ import { UserProfile } from '../types';
 import { MessageCircle, Send, X } from 'lucide-react';
 import './Chatbot.css';
 
-const CONSTANT_VARIABLE = 'AIzaSyC6-VnYWzzbNS3xyANFvpZ_dJk8BpAdvOM';
+const CONSTANT_VARIABLE = 'AIzaSyBX6UcZK-GB-_zIuYFfyO-DfeLjyxVL1Jc';
 
 interface ChatMessage {
   role: 'user' | 'assistant';

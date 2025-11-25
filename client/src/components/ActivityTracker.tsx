@@ -108,8 +108,8 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
     // Load initially
     loadData();
     
-    // Refresh every 30 seconds
-    const intervalId = setInterval(loadData, 30000);
+    // Refresh every 5 seconds for near real-time updates
+    const intervalId = setInterval(loadData, 5000);
     
     return () => clearInterval(intervalId);
     // eslint-disable-next-line react-hooks/exhaustive-deps

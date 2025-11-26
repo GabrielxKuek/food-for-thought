@@ -33,8 +33,7 @@ logger.info(f"Using device: {device}")
 # Hardcoded Stuff
 # ----------------------------
 CLASS_NAME_MAP = {
-#    0: 'fish_and_chips',
-0: 'nasi_lemak',
+    0: 'fish_and_chips',
     # 1: 'fried_noodles',
     1: 'nasi_lemak',
     # 2: 'fried_rice',
@@ -51,8 +50,7 @@ CLASS_NAME_MAP = {
 8: 'nasi_lemak',
     # 9: 'roti_canai',
     9: 'nasi_lemak',
-    # 10: 'satay',
-10: 'nasi_lemak'
+    10: 'satay'
 }
 
 # (the nutrition db query actually works ok, just so dunnid make api call all the time for the classifer foods)

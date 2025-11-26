@@ -246,56 +246,53 @@ body {
   }
   
   .nav {
-    padding: 8px 16px;
+    padding: 8px 16px 16px 16px;
     overflow-x: auto;
-    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    scroll-snap-type: x proximity;
     position: relative;
     
-    /* Show scrollbar on mobile */
-    scrollbar-width: thin;
-    scrollbar-color: #9ca3af #f9fafb;
+    /* Always show scrollbar on mobile */
+    scrollbar-width: auto;
+    scrollbar-color: #6b7280 #e5e7eb;
   }
   
-  /* Webkit scrollbar styling for iOS/Chrome */
+  /* Fade gradient overlay - doesn't affect layout */
+  .nav::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 0;
+    bottom: 16px;
+    width: 48px;
+    background: linear-gradient(to left, #f9fafb 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  /* Webkit scrollbar styling - make it prominent */
   .nav::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
   }
   
   .nav::-webkit-scrollbar-track {
-    background: #f9fafb;
-    border-radius: 3px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    margin: 0 16px;
   }
   
   .nav::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
+    background: #6b7280;
+    border-radius: 4px;
   }
   
-  .nav::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-  }
-  
-  /* Fade gradient on right side to indicate more content */
-  .nav::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 32px;
-    background: linear-gradient(to left, #f9fafb 0%, rgba(249, 250, 251, 0.8) 50%, transparent 100%);
-    pointer-events: none;
-    z-index: 1;
+  .nav::-webkit-scrollbar-thumb:active {
+    background: #4b5563;
   }
   
   .nav-button {
     padding: 8px 12px;
     font-size: 0.8125rem;
     white-space: nowrap;
-    scroll-snap-align: start;
     flex-shrink: 0;
   }
   

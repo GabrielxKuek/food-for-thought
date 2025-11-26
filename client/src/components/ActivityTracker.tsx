@@ -51,6 +51,9 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
   }, [hasRealData, setCurrentHeartRate]);
 
   useEffect(() => {
+    // Set watch as connected immediately for demo
+    setIsConnected(true);
+    
     // Auto-load data on mount
     const loadData = async () => {
       setIsConnected(true);
@@ -129,7 +132,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
         updateSyncTime();
       } catch (error) {
         console.error('Failed to load data:', error);
-        setIsConnected(false);
+        // Keep watch connected even on error for demo
       }
     };
 
@@ -232,7 +235,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
     } catch (error) {
       console.error('Failed to load data:', error);
       alert('❌ Failed to load data. Make sure backend is running.');
-      setIsConnected(false);
+      // Keep watch connected even on error for demo
     } finally {
       setLoading(false);
     }

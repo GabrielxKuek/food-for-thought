@@ -12,7 +12,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
   const [activities, setActivities] = useState<ActivitySession[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
-  const [hasRealData, setHasRealData] = useState(false); // Track if we have real Apple Watch data
   
   const {
     currentHeartRate,
@@ -27,7 +26,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
 
   // Simulated heart rate for demo/presentation - fluctuates realistically
   useEffect(() => {
-    if (hasRealData) return; // Don't simulate if we have real data
+    // Always use simulated data for presentation - don't use real Apple Watch data
 
     // Base heart rate for moderate intensity workout (120-140 bpm)
     const baseHeartRate = 130;
@@ -48,7 +47,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
     const simulationInterval = setInterval(simulateHeartRate, 2000);
 
     return () => clearInterval(simulationInterval);
-  }, [hasRealData, setCurrentHeartRate]);
+  }, [setCurrentHeartRate]);
 
   useEffect(() => {
     // Set watch as connected immediately for demo
@@ -72,30 +71,14 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
         const data = await response.json();
         setIsConnected(true);
         
-        // Store heart rate data in context
+        // Store heart rate data in context (but don't update display - keep simulated for demo)
         if (data.heart_rates && data.heart_rates.length > 0) {
           addHeartRates(data.heart_rates.map((hr: any) => ({
             timestamp: hr.timestamp,
             bpm: hr.bpm,
             source: hr.source || 'Apple Watch'
           })));
-          console.log(`✅ Loaded ${data.heart_rates.length} heart rate readings`);
-
-          // Update current heart rate from most recent reading
-          const sortedHeartRates = data.heart_rates.sort((a: any, b: any) => 
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-          );
-          const mostRecentHeartRate = sortedHeartRates[0];
-          setCurrentHeartRate(mostRecentHeartRate.bpm);
-          setHasRealData(true); // We have real Apple Watch data now!
-          console.log(`✅ Set current heart rate to ${mostRecentHeartRate.bpm} BPM from ${new Date(mostRecentHeartRate.timestamp).toLocaleString()}`);
-        }
-        
-        // Also check if there's a specific current_heart_rate field (backup)
-        if (data.current_heart_rate) {
-          setCurrentHeartRate(data.current_heart_rate.bpm);
-          setHasRealData(true); // We have real data!
-          console.log(`✅ Updated current heart rate from API: ${data.current_heart_rate.bpm} BPM`);
+          console.log(`✅ Loaded ${data.heart_rates.length} heart rate readings (display uses simulated data)`);
         }
 
         // Store activities with correct Redis field names (matching API response)
@@ -175,27 +158,14 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
       const data = await response.json();
       setIsConnected(true);
       
-      // Store heart rate data in context
+      // Store heart rate data in context (but don't update display - keep simulated for demo)
       if (data.heart_rates && data.heart_rates.length > 0) {
         addHeartRates(data.heart_rates.map((hr: any) => ({
           timestamp: hr.timestamp,
           bpm: hr.bpm,
           source: hr.source || 'Apple Watch'
         })));
-
-        // Update current heart rate from most recent reading
-        const sortedHeartRates = data.heart_rates.sort((a: any, b: any) => 
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-        const mostRecentHeartRate = sortedHeartRates[0];
-        setCurrentHeartRate(mostRecentHeartRate.bpm);
-        console.log(`✅ Synced current heart rate to ${mostRecentHeartRate.bpm} BPM from ${new Date(mostRecentHeartRate.timestamp).toLocaleString()}`);
-      }
-      
-      // Also check if there's a specific current_heart_rate field (backup)
-      if (data.current_heart_rate) {
-        setCurrentHeartRate(data.current_heart_rate.bpm);
-        console.log(`✅ Synced current heart rate from API: ${data.current_heart_rate.bpm} BPM`);
+        console.log(`✅ Synced ${data.heart_rates.length} heart rate readings (display uses simulated data)`);
       }
       
       // Store activities with correct Redis field names (matching API response)

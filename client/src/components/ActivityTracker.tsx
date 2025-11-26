@@ -12,6 +12,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
   const [activities, setActivities] = useState<ActivitySession[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [hasRealData, setHasRealData] = useState(false); // Track if we have real Apple Watch data
   
   const {
     currentHeartRate,
@@ -23,6 +24,31 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
     addSteps,
     updateSyncTime,
   } = useHealth();
+
+  // Simulated heart rate for demo/presentation - fluctuates realistically
+  useEffect(() => {
+    if (hasRealData) return; // Don't simulate if we have real data
+
+    // Base heart rate for moderate intensity workout (120-140 bpm)
+    const baseHeartRate = 130;
+    const variation = 10; // +/- 10 bpm variation
+    
+    const simulateHeartRate = () => {
+      // Create realistic fluctuation using sine wave + random noise
+      const time = Date.now() / 1000; // Current time in seconds
+      const sineWave = Math.sin(time / 5) * variation; // Slow sine wave
+      const randomNoise = (Math.random() - 0.5) * 5; // Small random variation
+      const simulatedBpm = Math.round(baseHeartRate + sineWave + randomNoise);
+      
+      setCurrentHeartRate(simulatedBpm);
+    };
+
+    // Update simulated heart rate every 2 seconds for smooth animation
+    simulateHeartRate(); // Set initial value
+    const simulationInterval = setInterval(simulateHeartRate, 2000);
+
+    return () => clearInterval(simulationInterval);
+  }, [hasRealData, setCurrentHeartRate]);
 
   useEffect(() => {
     // Auto-load data on mount
@@ -58,12 +84,14 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
           );
           const mostRecentHeartRate = sortedHeartRates[0];
           setCurrentHeartRate(mostRecentHeartRate.bpm);
+          setHasRealData(true); // We have real Apple Watch data now!
           console.log(`✅ Set current heart rate to ${mostRecentHeartRate.bpm} BPM from ${new Date(mostRecentHeartRate.timestamp).toLocaleString()}`);
         }
         
         // Also check if there's a specific current_heart_rate field (backup)
         if (data.current_heart_rate) {
           setCurrentHeartRate(data.current_heart_rate.bpm);
+          setHasRealData(true); // We have real data!
           console.log(`✅ Updated current heart rate from API: ${data.current_heart_rate.bpm} BPM`);
         }
 
@@ -314,7 +342,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
         </div>
       </div>
 
-      {isConnected && currentHeartRate && (
+      {currentHeartRate && (
         <div className="heart-rate-monitor">
           <div className="heart-rate-display">
             <div className="heart-icon">

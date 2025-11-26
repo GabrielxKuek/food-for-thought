@@ -291,7 +291,7 @@ class HealthKitManager: ObservableObject {
         }
     }
     
-    // MARK: - Background Delivery
+    // MARK: - Background Delivery & Auto-Sync
     
     /// Enable background delivery for real-time updates
     func enableBackgroundDelivery(completion: @escaping (Bool, Error?) -> Void) {
@@ -310,7 +310,113 @@ class HealthKitManager: ObservableObject {
         }
     }
     
-    /// Set up observer query for real-time heart rate updates
+    /// Set up observer query for real-time heart rate updates with auto-sync
+    func startAutoSyncForHeartRate() {
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            print("❌ Heart rate type not available")
+            return
+        }
+        
+        print("🔄 Starting auto-sync observer for heart rate...")
+        
+        let query = HKObserverQuery(sampleType: heartRateType, predicate: nil) { [weak self] _, _, error in
+            if let error = error {
+                print("❌ Observer query error: \(error)")
+                return
+            }
+            
+            print("💓 New heart rate data detected - auto-syncing...")
+            
+            // Fetch the latest heart rate data
+            self?.fetchLatestHeartRate { heartRateData in
+                guard let heartRateData = heartRateData else {
+                    print("❌ No heart rate data to sync")
+                    return
+                }
+                
+                // Auto-sync just the latest heart rate
+                self?.autoSyncHeartRate(heartRateData)
+            }
+        }
+        
+        healthStore.execute(query)
+        
+        // Also enable background delivery
+        enableBackgroundDelivery { success, error in
+            if success {
+                print("✅ Background delivery enabled for heart rate")
+            } else {
+                print("❌ Failed to enable background delivery: \(error?.localizedDescription ?? "Unknown error")")
+            }
+        }
+    }
+    
+    /// Fetch only the most recent heart rate sample
+    private func fetchLatestHeartRate(completion: @escaping (HeartRateData?) -> Void) {
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            completion(nil)
+            return
+        }
+        
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        
+        let query = HKSampleQuery(
+            sampleType: heartRateType,
+            predicate: nil,
+            limit: 1, // Only get the most recent
+            sortDescriptors: [sortDescriptor]
+        ) { _, samples, error in
+            
+            guard let sample = samples?.first as? HKQuantitySample, error == nil else {
+                completion(nil)
+                return
+            }
+            
+            let bpm = Int(sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())))
+            let heartRateData = HeartRateData(
+                timestamp: sample.startDate,
+                bpm: bpm,
+                source: sample.sourceRevision.source.name
+            )
+            
+            // Update UI
+            DispatchQueue.main.async {
+                self.healthSummary.latestHeartRate = bpm
+            }
+            
+            completion(heartRateData)
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    /// Auto-sync a single heart rate reading to the backend
+    private func autoSyncHeartRate(_ heartRateData: HeartRateData) {
+        // Create a minimal sync request with just the latest heart rate
+        let syncRequest = HealthSyncRequest(
+            userId: "user123", // TODO: Replace with actual user ID
+            heartRates: [heartRateData], // Just the latest reading
+            activities: [], // Empty for live sync
+            steps: [] // Empty for live sync
+        )
+        
+        print("🚀 Auto-syncing heart rate: \(heartRateData.bpm) BPM at \(heartRateData.timestamp)")
+        
+        APIService.shared.syncHealthData(syncRequest) { result in
+            switch result {
+            case .success(let response):
+                print("✅ Auto-sync successful: \(response.heartRatesSynced) heart rates synced")
+                DispatchQueue.main.async {
+                    self.healthSummary.lastSyncDate = Date()
+                }
+            case .failure(let error):
+                print("❌ Auto-sync failed: \(error.localizedDescription)")
+                // Don't show error to user for background sync - just log it
+            }
+        }
+    }
+    
+    /// Set up observer query for real-time heart rate updates (legacy method)
     func observeHeartRate(updateHandler: @escaping () -> Void) {
         guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
             return

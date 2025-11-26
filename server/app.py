@@ -34,15 +34,19 @@ logger.info(f"Using device: {device}")
 # ----------------------------
 CLASS_NAME_MAP = {
     0: 'fish_and_chips',
-    1: 'fried_noodles',
-    2: 'fried_rice',
+    # 1: 'fried_noodles',
+    1: 'nasi_lemak',
+    # 2: 'fried_rice',
+    2: 'nasi_lemak',
     3: 'hamburger',
     4: 'kaya_toast',
     5: 'laksa',
-    6: 'mixed_rice',
+    # 6: 'mixed_rice',
+    6: 'nasi_lemak',
     7: 'nasi_lemak',
     8: 'popiah',
-    9: 'roti_canai',
+    # 9: 'roti_canai',
+    9: 'nasi_lemak',
     10: 'satay',
 }
 

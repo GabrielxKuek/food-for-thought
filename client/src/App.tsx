@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
@@ -14,6 +14,9 @@ import { LayoutDashboard, User, Utensils, Activity, ClipboardList } from 'lucide
 function App() {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'profile' | 'food' | 'activity' | 'planner'>('dashboard');
   const [userId] = useState<string>('user123');
+  const navRef = useRef<HTMLDivElement>(null);
+  const [scrollPercentage, setScrollPercentage] = useState(0);
+  const [canScroll, setCanScroll] = useState(false);
   
   // Load user profile from localStorage or use default
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
@@ -49,6 +52,33 @@ function App() {
     }
   }, [userProfile]);
 
+  // Track scroll position for custom scrollbar
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const updateScrollInfo = () => {
+      const scrollWidth = nav.scrollWidth;
+      const clientWidth = nav.clientWidth;
+      const scrollLeft = nav.scrollLeft;
+
+      setCanScroll(scrollWidth > clientWidth);
+
+      const maxScroll = scrollWidth - clientWidth;
+      const percentage = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
+      setScrollPercentage(percentage);
+    };
+
+    updateScrollInfo();
+    nav.addEventListener('scroll', updateScrollInfo);
+    window.addEventListener('resize', updateScrollInfo);
+
+    return () => {
+      nav.removeEventListener('scroll', updateScrollInfo);
+      window.removeEventListener('resize', updateScrollInfo);
+    };
+  }, []);
+
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
@@ -76,43 +106,55 @@ function App() {
               <p>Track your nutrition and fitness</p>
             </div>
 
-            <nav className="nav">
-              <button
-                className={`nav-button ${currentPage === 'dashboard' ? 'active' : ''}`}
-                onClick={() => setCurrentPage('dashboard')}
-              >
-                <LayoutDashboard size={16} />
-                Dashboard
-              </button>
-              <button
-                className={`nav-button ${currentPage === 'profile' ? 'active' : ''}`}
-                onClick={() => setCurrentPage('profile')}
-              >
-                <User size={16} />
-                Profile
-              </button>
-              <button
-                className={`nav-button ${currentPage === 'food' ? 'active' : ''}`}
-                onClick={() => setCurrentPage('food')}
-              >
-                <Utensils size={16} />
-                Food Log
-              </button>
-              <button
-                className={`nav-button ${currentPage === 'activity' ? 'active' : ''}`}
-                onClick={() => setCurrentPage('activity')}
-              >
-                <Activity size={16} />
-                Activity
-              </button>
-              <button
-                className={`nav-button ${currentPage === 'planner' ? 'active' : ''}`}
-                onClick={() => setCurrentPage('planner')}
-              >
-                <ClipboardList size={16} />
-                Planner
-              </button>
-            </nav>
+            <div className="nav-wrapper">
+              <nav ref={navRef} className="nav">
+                <button
+                  className={`nav-button ${currentPage === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => setCurrentPage('dashboard')}
+                >
+                  <LayoutDashboard size={16} />
+                  Dashboard
+                </button>
+                <button
+                  className={`nav-button ${currentPage === 'profile' ? 'active' : ''}`}
+                  onClick={() => setCurrentPage('profile')}
+                >
+                  <User size={16} />
+                  Profile
+                </button>
+                <button
+                  className={`nav-button ${currentPage === 'food' ? 'active' : ''}`}
+                  onClick={() => setCurrentPage('food')}
+                >
+                  <Utensils size={16} />
+                  Food Log
+                </button>
+                <button
+                  className={`nav-button ${currentPage === 'activity' ? 'active' : ''}`}
+                  onClick={() => setCurrentPage('activity')}
+                >
+                  <Activity size={16} />
+                  Activity
+                </button>
+                <button
+                  className={`nav-button ${currentPage === 'planner' ? 'active' : ''}`}
+                  onClick={() => setCurrentPage('planner')}
+                >
+                  <ClipboardList size={16} />
+                  Planner
+                </button>
+              </nav>
+              {canScroll && (
+                <div className="custom-scrollbar">
+                  <div className="custom-scrollbar-track">
+                    <div
+                      className="custom-scrollbar-thumb"
+                      style={{ left: `${scrollPercentage}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             <Tamagotchi userId={userId} />
 

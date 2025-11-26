@@ -11,7 +11,6 @@ interface ActivityTrackerProps {
 const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' }) => {
   const [activities, setActivities] = useState<ActivitySession[]>([]);
   const [loading, setLoading] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   
   const {
     currentHeartRate,
@@ -106,11 +105,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
         if (data.steps && data.steps.length > 0) {
           addSteps(data.steps);
         }
-
-        // Update sync time
-        if (data.summary?.last_sync) {
-          setLastSyncTime(data.summary.last_sync);
-        }
         
         updateSyncTime();
       } catch (error) {
@@ -193,11 +187,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
       // Store steps in context
       if (data.steps && data.steps.length > 0) {
         addSteps(data.steps);
-      }
-
-      // Update sync time
-      if (data.summary?.last_sync) {
-        setLastSyncTime(data.summary.last_sync);
       }
       
       updateSyncTime();
@@ -307,11 +296,6 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({ userId = 'user123' })
             <RefreshCw size={14} className={loading ? 'spinning' : ''} />
             {loading ? 'Syncing...' : 'Sync'}
           </button>
-          {lastSyncTime && (
-            <small className="last-sync">
-              Last sync: {new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </small>
-          )}
         </div>
       </div>
 
